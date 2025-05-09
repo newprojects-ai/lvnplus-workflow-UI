@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { DndProvider, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrop } from 'react-dnd';
 import { WorkflowDefinition, WorkflowInstance } from '../../types';
 import ConnectionLine from './ConnectionLine';
 import WorkflowStep from './WorkflowStep';
@@ -168,33 +167,32 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   }), [scale, onStepMove]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div
-        className={`relative border border-gray-300 bg-white rounded-lg overflow-hidden ${className}`}
-        style={{ height: '500px' }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
-        ref={canvasRef}
-      >
-        {isInteractive && (
-          <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-600">Connector:</span>
-              <select
-                value={connectorType}
-                onChange={(e) => setConnectorType(e.target.value as any)}
-                className="text-xs border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="straight">Straight</option>
-                <option value="curved">Curved</option>
-                <option value="orthogonal">Orthogonal</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center space-x-1">
+    <div
+      className={`relative border border-gray-300 bg-white rounded-lg overflow-hidden ${className}`}
+      style={{ height: '500px' }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onWheel={handleWheel}
+      ref={canvasRef}
+    >
+      {isInteractive && (
+        <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-600">Connector:</span>
+            <select
+              value={connectorType}
+              onChange={(e) => setConnectorType(e.target.value as any)}
+              className="text-xs border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="straight">Straight</option>
+              <option value="curved">Curved</option>
+              <option value="orthogonal">Orthogonal</option>
+            </select>
+          </div>
+          
+          <div className="flex items-center space-x-1">
             <button
               onClick={() => setScale(prev => Math.min(2, prev + 0.1))}
               className="text-blue-600 hover:bg-blue-50 p-1 rounded"
@@ -220,96 +218,95 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
               Reset
             </button>
           </div>
-          </div>
-        )}
-        
-        <div
-          className="absolute"
-          ref={(node) => {
-            dropTargetRef.current = node;
-            drop(node);
-          }}
-          style={{
-            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scale})`,
-            transformOrigin: '0 0',
-            transition: isDragging ? 'none' : 'transform 0.2s',
-            cursor: isInteractive ? (isDragging ? 'grabbing' : 'grab') : 'default'
-          }}
-        >
-          {/* Draw Transitions/Connections */}
-          <svg width="3000" height="3000" className="absolute top-0 left-0 pointer-events-none">
-            {workflow.transitions.map(transition => {
-              const fromStep = workflow.steps.find(s => s.id === transition.from);
-              const toStep = workflow.steps.find(s => s.id === transition.to);
-              
-              if (!fromStep || !toStep) return null;
-              
-              const fromX = fromStep.position.x + 60;
-              const fromY = fromStep.position.y + 40;
-              const toX = toStep.position.x + 60;
-              const toY = toStep.position.y + 40;
-              
-              // Determine the color based on status
-              let color = '#94a3b8';
-              if (instance) {
-                const fromStatus = getStepStatus(fromStep.id);
-                const toStatus = getStepStatus(toStep.id);
-                
-                if (fromStatus === 'completed' && toStatus === 'completed') {
-                  color = '#2ecc71'; // Green for completed
-                } else if (fromStatus === 'completed' && toStatus === 'active') {
-                  color = '#3498db'; // Blue for active
-                }
-              }
-              
-              return (
-                <ConnectionLine
-                  key={transition.id}
-                  fromX={fromX}
-                  fromY={fromY}
-                  toX={toX}
-                  toY={toY}
-                  type={connectorType}
-                  color={color}
-                  dashed={!!transition.condition}
-                  condition={transition.condition}
-                  onClick={() => onTransitionDelete?.(transition.id)}
-                />
-              );
-            })}
-          </svg>
-          
-          {/* Draw Steps */}
-          {workflow.steps.map(step => (
-            <WorkflowStep
-              key={step.id}
-              step={step}
-              isInteractive={isInteractive}
-              selectedStepId={selectedStepId}
-              stepStatus={getStepStatus(step.id)}
-              onStepSelect={onStepSelect}
-              onStepDelete={onStepDelete}
-              onStepMove={onStepMove}
-              onStepDragStart={handleStepDragStart}
-              onStepDragEnd={handleStepDragEnd}
-            />
-          ))}
-          
-          {isCreatingTransition && transitionStart && (
-            <line
-              x1={workflow.steps.find(s => s.id === transitionStart)?.position.x || 0}
-              y1={workflow.steps.find(s => s.id === transitionStart)?.position.y || 0}
-              x2={mousePos.x}
-              y2={mousePos.y}
-              stroke="#94a3b8"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-              className="pointer-events-none"
-            />
-          )}
         </div>
+      )}
+      
+      <div
+        className="absolute"
+        ref={(node) => {
+          dropTargetRef.current = node;
+          drop(node);
+        }}
+        style={{
+          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scale})`,
+          transformOrigin: '0 0',
+          transition: isDragging ? 'none' : 'transform 0.2s',
+          cursor: isInteractive ? (isDragging ? 'grabbing' : 'grab') : 'default'
+        }}
+      >
+        {/* Draw Transitions/Connections */}
+        <svg width="3000" height="3000" className="absolute top-0 left-0 pointer-events-none">
+          {workflow.transitions.map(transition => {
+            const fromStep = workflow.steps.find(s => s.id === transition.from);
+            const toStep = workflow.steps.find(s => s.id === transition.to);
+            
+            if (!fromStep || !toStep) return null;
+            
+            const fromX = fromStep.position.x + 60;
+            const fromY = fromStep.position.y + 40;
+            const toX = toStep.position.x + 60;
+            const toY = toStep.position.y + 40;
+            
+            // Determine the color based on status
+            let color = '#94a3b8';
+            if (instance) {
+              const fromStatus = getStepStatus(fromStep.id);
+              const toStatus = getStepStatus(toStep.id);
+              
+              if (fromStatus === 'completed' && toStatus === 'completed') {
+                color = '#2ecc71'; // Green for completed
+              } else if (fromStatus === 'completed' && toStatus === 'active') {
+                color = '#3498db'; // Blue for active
+              }
+            }
+            
+            return (
+              <ConnectionLine
+                key={transition.id}
+                fromX={fromX}
+                fromY={fromY}
+                toX={toX}
+                toY={toY}
+                type={connectorType}
+                color={color}
+                dashed={!!transition.condition}
+                condition={transition.condition}
+                onClick={() => onTransitionDelete?.(transition.id)}
+              />
+            );
+          })}
+        </svg>
+        
+        {/* Draw Steps */}
+        {workflow.steps.map(step => (
+          <WorkflowStep
+            key={step.id}
+            step={step}
+            isInteractive={isInteractive}
+            selectedStepId={selectedStepId}
+            stepStatus={getStepStatus(step.id)}
+            onStepSelect={onStepSelect}
+            onStepDelete={onStepDelete}
+            onStepMove={onStepMove}
+            onStepDragStart={handleStepDragStart}
+            onStepDragEnd={handleStepDragEnd}
+          />
+        ))}
+        
+        {isCreatingTransition && transitionStart && (
+          <line
+            x1={workflow.steps.find(s => s.id === transitionStart)?.position.x || 0}
+            y1={workflow.steps.find(s => s.id === transitionStart)?.position.y || 0}
+            x2={mousePos.x}
+            y2={mousePos.y}
+            stroke="#94a3b8"
+            strokeWidth="2"
+            strokeDasharray="5,5"
+            className="pointer-events-none"
+          />
+        )}
       </div>
-    </DndProvider>
+    </div>
   );
 };
 
