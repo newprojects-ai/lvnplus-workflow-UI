@@ -13,6 +13,7 @@ interface WorkflowListProps {
 const WorkflowList: React.FC<WorkflowListProps> = ({ workflows }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const navigate = useNavigate();
 
   const filteredWorkflows = workflows.filter(workflow => {
     const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -86,6 +87,7 @@ const WorkflowList: React.FC<WorkflowListProps> = ({ workflows }) => {
               key={workflow.id}
               hoverable
               className="flex flex-col"
+              onClick={() => navigate(`/workflows/${workflow.id}`)}
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -114,30 +116,48 @@ const WorkflowList: React.FC<WorkflowListProps> = ({ workflows }) => {
               </div>
               
               <div className="flex justify-between mt-auto pt-4 border-t border-gray-100">
-                <Link to={`/workflows/${workflow.id}/edit`}>
-                  <Button variant="outline" size="sm">
-                    <Edit2 className="mr-1 h-3 w-3" />
-                    Edit
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/workflows/${workflow.id}/edit`);
+                  }}
+                >
+                  <Edit2 className="mr-1 h-3 w-3" />
+                  Edit
+                </Button>
                 
                 {workflow.status === 'published' && (
-                  <Link to={`/instances/new?workflowId=${workflow.id}`}>
-                    <Button variant="primary" size="sm">
-                      <PlayCircle className="mr-1 h-3 w-3" />
-                      Start
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="primary" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/instances/new?workflowId=${workflow.id}`);
+                    }}
+                  >
+                    <PlayCircle className="mr-1 h-3 w-3" />
+                    Start
+                  </Button>
                 )}
                 
                 {workflow.status === 'draft' && (
-                  <Button variant="secondary" size="sm">
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     Publish
                   </Button>
                 )}
                 
                 {workflow.status === 'published' && (
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Archive className="mr-1 h-3 w-3" />
                     Archive
                   </Button>
