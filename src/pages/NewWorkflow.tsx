@@ -102,6 +102,51 @@ const NewWorkflow: React.FC = () => {
     }));
   };
 
+  const handleStepMove = (stepId: string, newPosition: { x: number; y: number }) => {
+    setWorkflow(prev => ({
+      ...prev,
+      steps: prev.steps.map(step =>
+        step.id === stepId ? { ...step, position: newPosition } : step
+      )
+    }));
+  };
+
+  const handleStepDelete = (stepId: string) => {
+    setWorkflow(prev => ({
+      ...prev,
+      steps: prev.steps.filter(step => step.id !== stepId),
+      transitions: prev.transitions.filter(t => 
+        t.from !== stepId && t.to !== stepId
+      )
+    }));
+  };
+
+  const handleTransitionCreate = (fromId: string, toId: string) => {
+    // Prevent self-transitions
+    if (fromId === toId) return;
+    
+    // Prevent duplicate transitions
+    if (workflow.transitions.some(t => t.from === fromId && t.to === toId)) return;
+    
+    const newTransition = {
+      id: `transition-${Date.now()}`,
+      from: fromId,
+      to: toId
+    };
+
+    setWorkflow(prev => ({
+      ...prev,
+      transitions: [...prev.transitions, newTransition]
+    }));
+  };
+
+  const handleTransitionDelete = (transitionId: string) => {
+    setWorkflow(prev => ({
+      ...prev,
+      transitions: prev.transitions.filter(t => t.id !== transitionId)
+    }));
+  };
+
   return (
     <Layout>
       <div className="mb-8">
@@ -180,6 +225,10 @@ const NewWorkflow: React.FC = () => {
               <WorkflowVisualizer
                 workflow={workflow}
                 isInteractive
+                onStepMove={handleStepMove}
+                onStepDelete={handleStepDelete}
+                onTransitionCreate={handleTransitionCreate}
+                onTransitionDelete={handleTransitionDelete}
                 onStepSelect={setSelectedStep}
                 selectedStepId={selectedStep}
               />
