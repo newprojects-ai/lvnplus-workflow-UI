@@ -22,6 +22,10 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   instance,
   selectedStepId,
   onStepSelect,
+  onStepMove,
+  onStepDelete,
+  onTransitionCreate,
+  onTransitionDelete,
   className = '',
   isInteractive = false
 }) => {
@@ -154,10 +158,6 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
 
   const handleStepMove = useCallback((stepId: string, position: { x: number; y: number }) => {
     if (!isInteractive) return;
-    setStepPositions(prev => ({
-      ...prev,
-      [stepId]: position
-    }));
     if (onStepMove) {
       onStepMove(stepId, position);
     }
