@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import Layout from '../components/layout/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -222,16 +224,18 @@ const NewWorkflow: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <WorkflowVisualizer
-                workflow={workflow}
-                isInteractive={true}
-                onStepMove={handleStepMove}
-                onStepDelete={handleStepDelete}
-                onTransitionCreate={handleTransitionCreate}
-                onTransitionDelete={handleTransitionDelete}
-                onStepSelect={setSelectedStep}
-                selectedStepId={selectedStep}
-              />
+              <DndProvider backend={HTML5Backend}>
+                <WorkflowVisualizer
+                  workflow={workflow}
+                  isInteractive={true}
+                  onStepMove={handleStepMove}
+                  onStepDelete={handleStepDelete}
+                  onTransitionCreate={handleTransitionCreate}
+                  onTransitionDelete={handleTransitionDelete}
+                  onStepSelect={setSelectedStep}
+                  selectedStepId={selectedStep}
+                />
+              </DndProvider>
             )}
           </Card>
         </div>
