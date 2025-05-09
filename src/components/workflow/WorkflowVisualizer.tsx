@@ -4,6 +4,8 @@ import { WorkflowDefinition, WorkflowInstance } from '../../types';
 interface WorkflowVisualizerProps {
   workflow: WorkflowDefinition;
   instance?: WorkflowInstance;
+  selectedStepId?: string | null;
+  onStepSelect?: (stepId: string) => void;
   className?: string;
   isInteractive?: boolean;
 }
@@ -11,6 +13,8 @@ interface WorkflowVisualizerProps {
 const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   workflow,
   instance,
+  selectedStepId,
+  onStepSelect,
   className = '',
   isInteractive = false
 }) => {
@@ -243,7 +247,10 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
           return (
             <div
               key={step.id}
-              className={`absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300`}
+              className={`absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
+                selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
+              } ${onStepSelect ? 'cursor-pointer' : ''}`}
+              onClick={() => onStepSelect?.(step.id)}
               style={{
                 left: step.position.x,
                 top: step.position.y,

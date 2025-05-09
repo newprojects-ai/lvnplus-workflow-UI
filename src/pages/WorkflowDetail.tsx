@@ -5,6 +5,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import WorkflowVisualizer from '../components/workflow/WorkflowVisualizer';
+import StepConfigPanel from '../components/workflow/StepConfigPanel';
 import { WorkflowDefinition, WorkflowInstance } from '../types';
 import { workflowService, instanceService } from '../services';
 import { PlayCircle, Edit2, Copy, Archive, BarChart3 } from 'lucide-react';
@@ -12,6 +13,7 @@ import { PlayCircle, Edit2, Copy, Archive, BarChart3 } from 'lucide-react';
 const WorkflowDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [workflow, setWorkflow] = useState<WorkflowDefinition | null>(null);
+  const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [instances, setInstances] = useState<WorkflowInstance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,8 +146,30 @@ const WorkflowDetail: React.FC = () => {
             </div>
             
             <h3 className="font-medium text-gray-900 mb-2">Visual Representation</h3>
-            <WorkflowVisualizer workflow={workflow} isInteractive />
+            <WorkflowVisualizer 
+              workflow={workflow} 
+              isInteractive 
+              onStepSelect={(stepId) => setSelectedStep(stepId)}
+              selectedStepId={selectedStep}
+            />
           </Card>
+          
+          {selectedStep && (
+            <Card>
+              <StepConfigPanel
+                step={workflow.steps.find(s => s.id === selectedStep)!}
+                onUpdate={(updates) => {
+                  const updatedWorkflow = {
+                    ...workflow,
+                    steps: workflow.steps.map(s =>
+                      s.id === selectedStep ? { ...s, ...updates } : s
+                    )
+                  };
+                  setWorkflow(updatedWorkflow);
+                }}
+              />
+            </Card>
+          )}
           
           <Card title="Recent Instances">
             <div className="overflow-x-auto">
