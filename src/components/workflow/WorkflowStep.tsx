@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDrag, useDrop } from 'react-dnd';
+import { useDrag } from 'react-dnd';
 import { X } from 'lucide-react';
 import { WorkflowStep as WorkflowStepType } from '../../types';
 
@@ -15,6 +15,12 @@ interface WorkflowStepProps {
   onStepDragEnd: (stepId: string) => void;
 }
 
+interface DragItem {
+  id: string;
+  type: string;
+  originalPosition: { x: number; y: number };
+}
+
 const WorkflowStep: React.FC<WorkflowStepProps> = ({
   step,
   isInteractive,
@@ -27,25 +33,25 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
   onStepDragEnd,
 }) => {
   const [{ isDragging }, dragRef] = useDrag(() => ({
-    type: 'STEP',
-    item: { id: step.id },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging()
-    })
-  }), [step.id]);
-
-  const [, dropRef] = useDrop(() => ({
-    accept: 'STEP',
-    drop: (item: { id: string }, monitor) => {
+    type: 'WORKFLOW_STEP',
+    item: (): DragItem => ({
+      id: step.id,
+      type: step.type,
+      originalPosition: step.position
+    }),
+    end: (item, monitor) => {
       const delta = monitor.getDifferenceFromInitialOffset();
       if (delta && onStepMove) {
         onStepMove(item.id, {
-          x: step.position.x + delta.x,
-          y: step.position.y + delta.y
+          x: item.originalPosition.x + delta.x,
+          y: item.originalPosition.y + delta.y
         });
       }
-    }
-  }), [step.position, onStepMove]);
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  }), [step.id, step.position, onStepMove]);
 
   const getStepColorByType = (type: string): string => {
     switch (type) {
@@ -73,10 +79,7 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
 
   return (
     <div
-      ref={(node) => {
-        const dragDropRef = dragRef(dropRef(node));
-        return isInteractive ? dragDropRef : node;
-      }}
+      ref={isInteractive ? dragRef : null}
       className={`absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
         selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
       } ${onStepSelect ? 'cursor-pointer' : ''}`}

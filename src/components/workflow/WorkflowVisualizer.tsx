@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { DndProvider } from 'react-dnd';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { WorkflowDefinition, WorkflowInstance } from '../../types';
 import ConnectionLine from './ConnectionLine';
@@ -33,6 +33,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   isInteractive = false
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const dropTargetRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [scale, setScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -151,6 +152,21 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     setTransitionStart(null);
   };
 
+  const [, drop] = useDrop(() => ({
+    accept: 'WORKFLOW_STEP',
+    hover: (item: any, monitor) => {
+      if (!dropTargetRef.current) return;
+      
+      const delta = monitor.getDifferenceFromInitialOffset();
+      if (delta && onStepMove) {
+        onStepMove(item.id, {
+          x: item.originalPosition.x + delta.x / scale,
+          y: item.originalPosition.y + delta.y / scale
+        });
+      }
+    }
+  }), [scale, onStepMove]);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div
@@ -209,6 +225,10 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
         
         <div
           className="absolute"
+          ref={(node) => {
+            dropTargetRef.current = node;
+            drop(node);
+          }}
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scale})`,
             transformOrigin: '0 0',
