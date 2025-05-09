@@ -35,3 +35,5 @@ class WorkflowService {
 
 // Create a singleton instance
 const workflowService = new WorkflowService();
+
+export default workflowService
