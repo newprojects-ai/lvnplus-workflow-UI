@@ -6,6 +6,7 @@ import Layout from '../components/layout/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import WorkflowVisualizer from '../components/workflow/WorkflowVisualizer';
+import ValidationPanel from '../components/workflow/ValidationPanel';
 import StepConfigPanel from '../components/workflow/StepConfigPanel';
 import { WorkflowDefinition, WorkflowStep, WorkflowTransition } from '../types';
 import { workflowService } from '../services';
@@ -253,6 +254,8 @@ const NewWorkflow: React.FC = () => {
               </div>
             </Card>
           )}
+
+          <ValidationPanel workflow={workflow} />
 
           <Card>
             <div className="space-y-4">

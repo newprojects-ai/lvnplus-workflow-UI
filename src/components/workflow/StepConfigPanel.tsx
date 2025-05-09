@@ -2,6 +2,8 @@ import React from 'react';
 import { WorkflowStep } from '../../types';
 import FormBuilder from './FormBuilder';
 import TaskConfigPanel from './TaskConfigPanel';
+import VariableMapping from './VariableMapping';
+import ErrorHandling from './ErrorHandling';
 import Card from '../ui/Card';
 
 interface StepConfigPanelProps {
@@ -59,6 +61,16 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({ step, onUpdate }) => 
         ) : ['service', 'script', 'timer', 'message'].includes(step.type) ? (
           <TaskConfigPanel step={step} onUpdate={onUpdate} />
         ) : null}
+
+        {/* Show Variable Mapping for all step types except start/end */}
+        {!['start', 'end'].includes(step.type) && (
+          <VariableMapping step={step} onUpdate={onUpdate} />
+        )}
+
+        {/* Show Error Handling for all step types except start/end/decision */}
+        {!['start', 'end', 'decision'].includes(step.type) && (
+          <ErrorHandling step={step} onUpdate={onUpdate} />
+        )}
       </div>
     </Card>
   );

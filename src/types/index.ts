@@ -41,6 +41,23 @@ export interface WorkflowStep {
       template: string;
       recipients: string[];
     };
+    variables?: Array<{
+      name: string;
+      type: 'input' | 'output';
+      source: string;
+      target: string;
+      transform?: string;
+    }>;
+    errorHandlers?: Array<{
+      type: 'retry' | 'fallback' | 'notification';
+      config: {
+        maxRetries?: number;
+        retryDelay?: number;
+        fallbackValue?: string;
+        notificationTemplate?: string;
+        recipients?: string[];
+      };
+    }>;
   };
 }
 
