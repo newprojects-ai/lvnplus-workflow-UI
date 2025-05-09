@@ -1,11 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { WorkflowDefinition, WorkflowInstance } from '../../types';
+import { X, Plus } from 'lucide-react';
 
 interface WorkflowVisualizerProps {
   workflow: WorkflowDefinition;
   instance?: WorkflowInstance;
   selectedStepId?: string | null;
   onStepSelect?: (stepId: string) => void;
+  onStepMove?: (stepId: string, position: { x: number; y: number }) => void;
+  onStepDelete?: (stepId: string) => void;
+  onTransitionCreate?: (fromId: string, toId: string) => void;
+  onTransitionDelete?: (transitionId: string) => void;
   className?: string;
   isInteractive?: boolean;
 }
@@ -23,6 +30,9 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isCreatingTransition, setIsCreatingTransition] = useState(false);
+  const [transitionStart, setTransitionStart] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Calculate canvas size based on steps
   useEffect(() => {
@@ -62,6 +72,16 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !isInteractive) return;
+    
+    // Get canvas bounds
+    const canvas = canvasRef.current?.getBoundingClientRect();
+    if (!canvas) return;
+    
+    // Calculate mouse position relative to canvas
+    const x = (e.clientX - canvas.left) / scale;
+    const y = (e.clientY - canvas.top) / scale;
+    setMousePos({ x, y });
+    
     const dx = e.clientX - dragStart.x;
     const dy = e.clientY - dragStart.y;
     setPanOffset({
@@ -113,7 +133,31 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     return 'pending';
   };
 
+  const handleStepDragStart = (stepId: string) => {
+    if (!isInteractive) return;
+    setTransitionStart(stepId);
+    setIsCreatingTransition(true);
+  };
+
+  const handleStepDragEnd = (stepId: string) => {
+    if (!isInteractive || !transitionStart || transitionStart === stepId) {
+      setIsCreatingTransition(false);
+      setTransitionStart(null);
+      return;
+    }
+
+    onTransitionCreate?.(transitionStart, stepId);
+    setIsCreatingTransition(false);
+    setTransitionStart(null);
+  };
+
+  const handleStepMove = useCallback((stepId: string, position: { x: number; y: number }) => {
+    if (!isInteractive) return;
+    onStepMove?.(stepId, position);
+  }, [isInteractive, onStepMove]);
+
   return (
+    <DndProvider backend={HTML5Backend}>
     <div
       className={`relative border border-gray-300 bg-white rounded-lg overflow-hidden ${className}`}
       style={{ height: '500px' }}
@@ -238,6 +282,26 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
         {workflow.steps.map(step => {
           const stepColor = getStepColorByType(step.type);
           const stepStatus = instance ? getStepStatus(step.id) : 'pending';
+          const [{ isDragging: isStepDragging }, dragRef] = useDrag(() => ({
+            type: 'STEP',
+            item: { id: step.id },
+            collect: (monitor) => ({
+              isDragging: monitor.isDragging()
+            })
+          }));
+
+          const [, dropRef] = useDrop(() => ({
+            accept: 'STEP',
+            drop: (item: { id: string }, monitor) => {
+              const delta = monitor.getDifferenceFromInitialOffset();
+              if (delta) {
+                handleStepMove(item.id, {
+                  x: step.position.x + delta.x,
+                  y: step.position.y + delta.y
+                });
+              }
+            }
+          }));
           
           let statusClass = '';
           switch(stepStatus) {
@@ -254,18 +318,35 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
           return (
             <div
               key={step.id}
+              ref={(node) => {
+                dragRef(dropRef(node));
+              }}
               className={`absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
                 selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
               } ${onStepSelect ? 'cursor-pointer' : ''}`}
               onClick={() => onStepSelect?.(step.id)}
+              onMouseDown={() => handleStepDragStart(step.id)}
+              onMouseUp={() => handleStepDragEnd(step.id)}
               style={{
                 left: step.position.x,
                 top: step.position.y,
                 width: '120px',
                 height: '80px',
-                zIndex: 1
+                zIndex: 1,
+                opacity: isStepDragging ? 0.5 : 1
               }}
             >
+              {isInteractive && step.type !== 'start' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStepDelete?.(step.id);
+                  }}
+                  className="absolute -top-2 -right-2 p-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-full"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
               <div 
                 className="w-8 h-8 rounded-full flex items-center justify-center mb-2"
                 style={{ backgroundColor: stepColor }}
@@ -281,8 +362,22 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
             </div>
           );
         })}
+        
+        {isCreatingTransition && transitionStart && (
+          <line
+            x1={workflow.steps.find(s => s.id === transitionStart)?.position.x || 0}
+            y1={workflow.steps.find(s => s.id === transitionStart)?.position.y || 0}
+            x2={mousePos.x}
+            y2={mousePos.y}
+            stroke="#94a3b8"
+            strokeWidth="2"
+            strokeDasharray="5,5"
+            className="pointer-events-none"
+          />
+        )}
       </div>
     </div>
+    </DndProvider>
   );
 };
 
