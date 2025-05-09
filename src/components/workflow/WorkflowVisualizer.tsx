@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import React, { useState, useEffect, useRef } from 'react';
+import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { WorkflowDefinition, WorkflowInstance } from '../../types';
-import { X, Plus } from 'lucide-react';
+import WorkflowStep from './WorkflowStep';
 
 interface WorkflowVisualizerProps {
   workflow: WorkflowDefinition;
@@ -15,11 +15,6 @@ interface WorkflowVisualizerProps {
   onTransitionDelete?: (transitionId: string) => void;
   className?: string;
   isInteractive?: boolean;
-}
-
-interface DragItem {
-  id: string;
-  index: number;
 }
 
 const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
@@ -35,6 +30,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   isInteractive = false
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [scale, setScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -42,10 +38,6 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   const [isCreatingTransition, setIsCreatingTransition] = useState(false);
   const [transitionStart, setTransitionStart] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [stepPositions, setStepPositions] = useState<Record<string, { x: number; y: number }>>({});
-
-  // Create refs for each step
-  const stepRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Calculate canvas size based on steps
   useEffect(() => {
@@ -119,16 +111,6 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     }
   };
 
-  const getStepColorByType = (type: string): string => {
-    switch (type) {
-      case 'start': return '#2ecc71'; // Green
-      case 'end': return '#e74c3c'; // Red
-      case 'task': return '#3498db'; // Blue
-      case 'decision': return '#f39c12'; // Yellow
-      default: return '#95a5a6'; // Gray
-    }
-  };
-
   const getStepStatus = (stepId: string): 'completed' | 'active' | 'pending' => {
     if (!instance) return 'pending';
     
@@ -163,42 +145,6 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     setIsCreatingTransition(false);
     setTransitionStart(null);
   };
-
-  const handleStepMove = useCallback((stepId: string, position: { x: number; y: number }) => {
-    if (!isInteractive) return;
-    if (onStepMove) {
-      onStepMove(stepId, position);
-    }
-  }, [isInteractive, onStepMove]);
-
-  // Create drag and drop handlers for each step
-  const createDragHandlers = useCallback((stepId: string) => {
-    const [{ isDragging: isStepDragging }, dragRef] = useDrag(() => ({
-      type: 'STEP',
-      item: { id: stepId },
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging()
-      })
-    }), [stepId]);
-
-    const [, dropRef] = useDrop(() => ({
-      accept: 'STEP',
-      drop: (item: { id: string }, monitor) => {
-        const delta = monitor.getDifferenceFromInitialOffset();
-        if (delta) {
-          const step = workflow.steps.find(s => s.id === item.id);
-          if (step) {
-            handleStepMove(item.id, {
-              x: step.position.x + delta.x,
-              y: step.position.y + delta.y
-            });
-          }
-        }
-      }
-    }), [stepId, workflow.steps, handleStepMove]);
-
-    return { isStepDragging, dragRef, dropRef };
-  }, [workflow.steps, handleStepMove]);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -323,71 +269,20 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
           </svg>
           
           {/* Draw Steps */}
-          {workflow.steps.map(step => {
-            const stepColor = getStepColorByType(step.type);
-            const stepStatus = instance ? getStepStatus(step.id) : 'pending';
-            const { isStepDragging, dragRef, dropRef } = createDragHandlers(step.id);
-            
-            let statusClass = '';
-            switch(stepStatus) {
-              case 'completed':
-                statusClass = 'border-green-500 bg-green-50';
-                break;
-              case 'active':
-                statusClass = 'border-blue-500 bg-blue-50 animate-pulse';
-                break;
-              default:
-                statusClass = 'border-gray-300 bg-white';
-            }
-            
-            return (
-              <div
-                key={step.id}
-                ref={(node) => {
-                  stepRefs.current[step.id] = node;
-                  dragRef(dropRef(node));
-                }}
-                className={`absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
-                  selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
-                } ${onStepSelect ? 'cursor-pointer' : ''}`}
-                onClick={() => onStepSelect?.(step.id)}
-                onMouseDown={() => handleStepDragStart(step.id)}
-                onMouseUp={() => handleStepDragEnd(step.id)}
-                style={{
-                  left: step.position.x,
-                  top: step.position.y,
-                  width: '120px',
-                  height: '80px',
-                  zIndex: 1,
-                  opacity: isStepDragging ? 0.5 : 1
-                }}
-              >
-                {isInteractive && step.type !== 'start' && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStepDelete?.(step.id);
-                    }}
-                    className="absolute -top-2 -right-2 p-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-full"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center mb-2"
-                  style={{ backgroundColor: stepColor }}
-                >
-                  {step.type === 'start' && <span className="text-white">S</span>}
-                  {step.type === 'end' && <span className="text-white">E</span>}
-                  {step.type === 'task' && <span className="text-white">T</span>}
-                  {step.type === 'decision' && <span className="text-white">D</span>}
-                </div>
-                <span className="text-xs font-medium text-gray-900 text-center line-clamp-2">
-                  {step.name}
-                </span>
-              </div>
-            );
-          })}
+          {workflow.steps.map(step => (
+            <WorkflowStep
+              key={step.id}
+              step={step}
+              isInteractive={isInteractive}
+              selectedStepId={selectedStepId}
+              stepStatus={getStepStatus(step.id)}
+              onStepSelect={onStepSelect}
+              onStepDelete={onStepDelete}
+              onStepMove={onStepMove}
+              onStepDragStart={handleStepDragStart}
+              onStepDragEnd={handleStepDragEnd}
+            />
+          ))}
           
           {isCreatingTransition && transitionStart && (
             <line
