@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './SupabaseClient';
+import { BaseRepository } from '../base/BaseRepository';
 import { IWorkflowRepository } from '../interfaces/IWorkflowRepository';
 import { WorkflowDefinition } from '../../types';
 
-export class SupabaseWorkflowRepository implements IWorkflowRepository {
-  private supabase;
-
+export class SupabaseWorkflowRepository extends BaseRepository<WorkflowDefinition> implements IWorkflowRepository {
   constructor() {
-    this.supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    );
+    super(supabase, 'workflows');
   }
 
   async getAll(): Promise<WorkflowDefinition[]> {
@@ -39,6 +35,31 @@ export class SupabaseWorkflowRepository implements IWorkflowRepository {
 
     if (error) return null;
     return this.mapToWorkflowDefinition(data);
+  }
+
+  async publish(id: string): Promise<WorkflowDefinition | null> {
+    return this.update(id, { status: 'published' });
+  }
+
+  async archive(id: string): Promise<WorkflowDefinition | null> {
+    return this.update(id, { status: 'archived' });
+  }
+
+  protected mapToModel(data: any): WorkflowDefinition {
+    return this.mapToWorkflowDefinition(data);
+  }
+
+  protected mapFromModel(model: WorkflowDefinition): any {
+    return {
+      id: model.id,
+      name: model.name,
+      description: model.description,
+      version: model.version,
+      status: model.status,
+      created_by: model.createdBy,
+      created_at: model.createdAt.toISOString(),
+      updated_at: model.updatedAt.toISOString()
+    };
   }
 
   // ... implement other methods
