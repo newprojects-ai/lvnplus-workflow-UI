@@ -158,3 +158,5 @@ const UsersPage: React.FC = () => {
     </Layout>
   );
 };
+
+export default UsersPage
