@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { WorkflowDefinition, WorkflowInstance } from '../../types';
+import ConnectionLine from './ConnectionLine';
 import WorkflowStep from './WorkflowStep';
+import WorkflowToolbar from './WorkflowToolbar';
 
 interface WorkflowVisualizerProps {
   workflow: WorkflowDefinition;
@@ -158,6 +160,8 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
         onWheel={handleWheel}
         ref={canvasRef}
       >
+        {isInteractive && <WorkflowToolbar onAddStep={addStep} />}
+        
         {isInteractive && (
           <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex space-x-1">
             <button
@@ -204,21 +208,13 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
               
               if (!fromStep || !toStep) return null;
               
-              const fromX = fromStep.position.x + 60; // Half width of step
-              const fromY = fromStep.position.y + 40; // Half height of step
+              const fromX = fromStep.position.x + 60;
+              const fromY = fromStep.position.y + 40;
               const toX = toStep.position.x + 60;
               const toY = toStep.position.y + 40;
-
-              // Calculate arrow points
-              const angle = Math.atan2(toY - fromY, toX - fromX);
-              const arrowLength = 15;
-              const arrowX1 = toX - arrowLength * Math.cos(angle - Math.PI / 6);
-              const arrowY1 = toY - arrowLength * Math.sin(angle - Math.PI / 6);
-              const arrowX2 = toX - arrowLength * Math.cos(angle + Math.PI / 6);
-              const arrowY2 = toY - arrowLength * Math.sin(angle + Math.PI / 6);
-
+              
               // Determine the color based on status
-              let color = '#94a3b8'; // Default gray
+              let color = '#94a3b8';
               if (instance) {
                 const fromStatus = getStepStatus(fromStep.id);
                 const toStatus = getStepStatus(toStep.id);
@@ -231,39 +227,17 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
               }
               
               return (
-                <g key={transition.id}>
-                  <line
-                    x1={fromX}
-                    y1={fromY}
-                    x2={toX}
-                    y2={toY}
-                    stroke={color}
-                    strokeWidth="2"
-                    strokeDasharray={
-                      transition.condition ? "5,5" : "none"
-                    }
-                  />
-                  {/* Arrow head */}
-                  <polygon
-                    points={`${toX},${toY} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`}
-                    fill={color}
-                  />
-                  
-                  {/* Condition text if present */}
-                  {transition.condition && (
-                    <text
-                      x={(fromX + toX) / 2}
-                      y={(fromY + toY) / 2 - 10}
-                      fill="#475569"
-                      fontSize="12"
-                      textAnchor="middle"
-                      dy=".3em"
-                      style={{ pointerEvents: 'none' }}
-                    >
-                      {transition.condition}
-                    </text>
-                  )}
-                </g>
+                <ConnectionLine
+                  key={transition.id}
+                  fromX={fromX}
+                  fromY={fromY}
+                  toX={toX}
+                  toY={toY}
+                  color={color}
+                  dashed={!!transition.condition}
+                  condition={transition.condition}
+                  onClick={() => onTransitionDelete?.(transition.id)}
+                />
               );
             })}
           </svg>

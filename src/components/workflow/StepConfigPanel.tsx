@@ -1,6 +1,7 @@
 import React from 'react';
 import { WorkflowStep } from '../../types';
 import FormBuilder from './FormBuilder';
+import TaskConfigPanel from './TaskConfigPanel';
 import Card from '../ui/Card';
 
 interface StepConfigPanelProps {
@@ -40,14 +41,12 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({ step, onUpdate }) => 
           />
         </div>
 
-        {step.type === 'task' && (
+        {step.type === 'task' ? (
           <FormBuilder
             fields={step.config?.form?.fields || []}
             onChange={updateStepConfig}
           />
-        )}
-
-        {step.type === 'decision' && (
+        ) : step.type === 'decision' ? (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
             <div className="flex">
               <div className="ml-3">
@@ -57,7 +56,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({ step, onUpdate }) => 
               </div>
             </div>
           </div>
-        )}
+        ) : ['service', 'script', 'timer', 'message'].includes(step.type) ? (
+          <TaskConfigPanel step={step} onUpdate={onUpdate} />
+        ) : null}
       </div>
     </Card>
   );
