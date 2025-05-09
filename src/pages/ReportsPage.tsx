@@ -132,3 +132,5 @@ const ReportsPage: React.FC = () => {
     </Layout>
   );
 };
+
+export default ReportsPage
