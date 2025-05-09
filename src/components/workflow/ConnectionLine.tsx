@@ -5,6 +5,7 @@ interface ConnectionLineProps {
   fromY: number;
   toX: number;
   toY: number;
+  type?: 'straight' | 'curved' | 'orthogonal';
   color?: string;
   dashed?: boolean;
   condition?: string;
@@ -16,38 +17,60 @@ const ConnectionLine: React.FC<ConnectionLineProps> = ({
   fromY,
   toX,
   toY,
+  type = 'curved',
   color = '#94a3b8',
   dashed = false,
   condition,
   onClick
 }) => {
-  // Calculate control points for the curved line
-  const dx = toX - fromX;
-  const dy = toY - fromY;
-  const controlX1 = fromX + dx * 0.25;
-  const controlY1 = fromY;
-  const controlX2 = fromX + dx * 0.75;
-  const controlY2 = toY;
+  const getPath = () => {
+    switch (type) {
+      case 'straight':
+        return `M ${fromX} ${fromY} L ${toX} ${toY}`;
+      
+      case 'curved':
+        const dx = toX - fromX;
+        const controlX1 = fromX + dx * 0.25;
+        const controlY1 = fromY;
+        const controlX2 = fromX + dx * 0.75;
+        const controlY2 = toY;
+        return `M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`;
+      
+      case 'orthogonal':
+        const midX = (fromX + toX) / 2;
+        return `M ${fromX} ${fromY} L ${midX} ${fromY} L ${midX} ${toY} L ${toX} ${toY}`;
+      
+      default:
+        return `M ${fromX} ${fromY} L ${toX} ${toY}`;
+    }
+  };
 
   // Calculate arrow points
-  const angle = Math.atan2(toY - controlY2, toX - controlX2);
-  const arrowLength = 15;
-  const arrowWidth = 8;
-
-  const arrowPoints = [
-    [toX, toY],
-    [
-      toX - arrowLength * Math.cos(angle - Math.PI / 6),
-      toY - arrowLength * Math.sin(angle - Math.PI / 6)
-    ],
-    [
-      toX - arrowLength * Math.cos(angle + Math.PI / 6),
-      toY - arrowLength * Math.sin(angle + Math.PI / 6)
-    ]
-  ];
-
-  // Create path for curved line
-  const path = `M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`;
+  const getArrowPoints = () => {
+    let angle;
+    if (type === 'orthogonal') {
+      angle = toY > fromY ? Math.PI/2 : -Math.PI/2;
+    } else {
+      angle = Math.atan2(toY - fromY, toX - fromX);
+    }
+    
+    const arrowLength = 15;
+    const arrowWidth = 8;
+    
+    return [
+      [toX, toY],
+      [
+        toX - arrowLength * Math.cos(angle - Math.PI/6),
+        toY - arrowLength * Math.sin(angle - Math.PI/6)
+      ],
+      [
+        toX - arrowLength * Math.cos(angle + Math.PI/6),
+        toY - arrowLength * Math.sin(angle + Math.PI/6)
+      ]
+    ];
+  };
+  const path = getPath();
+  const arrowPoints = getArrowPoints();
 
   return (
     <g onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>

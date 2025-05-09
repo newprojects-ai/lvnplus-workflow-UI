@@ -4,7 +4,6 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { WorkflowDefinition, WorkflowInstance } from '../../types';
 import ConnectionLine from './ConnectionLine';
 import WorkflowStep from './WorkflowStep';
-import WorkflowToolbar from './WorkflowToolbar';
 
 interface WorkflowVisualizerProps {
   workflow: WorkflowDefinition;
@@ -42,6 +41,8 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   const [isCreatingTransition, setIsCreatingTransition] = useState(false);
   const [transitionStart, setTransitionStart] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showConnectorOptions, setShowConnectorOptions] = useState(false);
+  const [connectorType, setConnectorType] = useState<'straight' | 'curved' | 'orthogonal'>('curved');
 
   // Calculate canvas size based on steps
   useEffect(() => {
@@ -162,10 +163,22 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
         onWheel={handleWheel}
         ref={canvasRef}
       >
-        {isInteractive && <WorkflowToolbar onAddStep={onAddStep} />}
-        
         {isInteractive && (
-          <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex space-x-1">
+          <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-600">Connector:</span>
+              <select
+                value={connectorType}
+                onChange={(e) => setConnectorType(e.target.value as any)}
+                className="text-xs border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="straight">Straight</option>
+                <option value="curved">Curved</option>
+                <option value="orthogonal">Orthogonal</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center space-x-1">
             <button
               onClick={() => setScale(prev => Math.min(2, prev + 0.1))}
               className="text-blue-600 hover:bg-blue-50 p-1 rounded"
@@ -190,6 +203,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
             >
               Reset
             </button>
+          </div>
           </div>
         )}
         
@@ -235,6 +249,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                   fromY={fromY}
                   toX={toX}
                   toY={toY}
+                  type={connectorType}
                   color={color}
                   dashed={!!transition.condition}
                   condition={transition.condition}
