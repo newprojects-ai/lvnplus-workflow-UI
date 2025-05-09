@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IRepository } from '../interfaces/IRepository';
 
-export abstract class BaseRepository<T> implements IRepository<T> {
+abstract class BaseRepository<T> implements IRepository<T> {
   protected supabase: SupabaseClient;
   protected tableName: string;
 
@@ -65,6 +65,3 @@ export abstract class BaseRepository<T> implements IRepository<T> {
   protected abstract mapToModel(data: any): T;
   protected abstract mapFromModel(model: T): any;
 }
-
-
-export { BaseRepository }
