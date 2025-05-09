@@ -1,58 +1,37 @@
 import { WorkflowDefinition } from '../types';
-import { mockWorkflows, generateId } from '../mockData';
+import { getWorkflowRepository } from '../config/database';
 
 class WorkflowService {
-  private workflows: WorkflowDefinition[] = [...mockWorkflows];
+  private repository = getWorkflowRepository();
 
   getWorkflows(): Promise<WorkflowDefinition[]> {
-    return Promise.resolve([...this.workflows]);
+    return this.repository.getAll();
   }
 
   getWorkflowById(id: string): Promise<WorkflowDefinition | undefined> {
-    return Promise.resolve(this.workflows.find(w => w.id === id));
+    return this.repository.getById(id);
   }
 
   createWorkflow(workflow: Omit<WorkflowDefinition, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkflowDefinition> {
-    const newWorkflow = {
-      ...workflow,
-      id: `workflow-${generateId()}`,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as WorkflowDefinition;
-    
-    this.workflows.push(newWorkflow);
-    return Promise.resolve(newWorkflow);
+    return this.repository.create(workflow);
   }
 
   updateWorkflow(id: string, workflow: Partial<WorkflowDefinition>): Promise<WorkflowDefinition | null> {
-    const index = this.workflows.findIndex(w => w.id === id);
-    if (index === -1) return Promise.resolve(null);
-    
-    const updatedWorkflow = {
-      ...this.workflows[index],
-      ...workflow,
-      updatedAt: new Date()
-    };
-    
-    this.workflows[index] = updatedWorkflow;
-    return Promise.resolve(updatedWorkflow);
+    return this.repository.update(id, workflow);
   }
 
   deleteWorkflow(id: string): Promise<boolean> {
-    const initialLength = this.workflows.length;
-    this.workflows = this.workflows.filter(w => w.id !== id);
-    return Promise.resolve(this.workflows.length < initialLength);
+    return this.repository.delete(id);
   }
 
   publishWorkflow(id: string): Promise<WorkflowDefinition | null> {
-    return this.updateWorkflow(id, { status: 'published' });
+    return this.repository.publish(id);
   }
 
   archiveWorkflow(id: string): Promise<WorkflowDefinition | null> {
-    return this.updateWorkflow(id, { status: 'archived' });
+    return this.repository.archive(id);
   }
 }
 
 // Create a singleton instance
 const workflowService = new WorkflowService();
-export default workflowService;
