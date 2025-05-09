@@ -15,6 +15,7 @@ interface WorkflowVisualizerProps {
   onStepDelete?: (stepId: string) => void;
   onTransitionCreate?: (fromId: string, toId: string) => void;
   onTransitionDelete?: (transitionId: string) => void;
+  onAddStep?: (type: string, position: { x: number; y: number }) => void;
   className?: string;
   isInteractive?: boolean;
 }
@@ -28,6 +29,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   onStepDelete,
   onTransitionCreate,
   onTransitionDelete,
+  onAddStep,
   className = '',
   isInteractive = false
 }) => {
@@ -160,7 +162,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
         onWheel={handleWheel}
         ref={canvasRef}
       >
-        {isInteractive && <WorkflowToolbar onAddStep={addStep} />}
+        {isInteractive && <WorkflowToolbar onAddStep={onAddStep} />}
         
         {isInteractive && (
           <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex space-x-1">
