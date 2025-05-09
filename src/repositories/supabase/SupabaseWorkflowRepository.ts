@@ -57,8 +57,8 @@ export class SupabaseWorkflowRepository extends BaseRepository<WorkflowDefinitio
       version: model.version,
       status: model.status,
       created_by: model.createdBy,
-      created_at: model.createdAt.toISOString(),
-      updated_at: model.updatedAt.toISOString()
+      "createdAt": model.createdAt.toISOString(),
+      "updatedAt": model.updatedAt.toISOString()
     };
   }
 
@@ -73,8 +73,8 @@ export class SupabaseWorkflowRepository extends BaseRepository<WorkflowDefinitio
       status: data.status,
       steps: data.steps.map(this.mapStep),
       transitions: data.transitions.map(this.mapTransition),
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
       createdBy: data.created_by
     };
   }
