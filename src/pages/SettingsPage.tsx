@@ -213,3 +213,5 @@ const SettingsPage: React.FC = () => {
     </Layout>
   );
 };
+
+export default SettingsPage
