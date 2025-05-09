@@ -4,7 +4,7 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { PlusCircle, Edit2, PlayCircle, Archive, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface WorkflowListProps {
   workflows: WorkflowDefinition[];
