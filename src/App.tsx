@@ -6,6 +6,7 @@ import { UserProvider } from './context/UserContext';
 import Dashboard from './pages/Dashboard';
 import WorkflowsPage from './pages/WorkflowsPage';
 import WorkflowDetail from './pages/WorkflowDetail';
+import NewWorkflow from './pages/NewWorkflow';
 import InstancesPage from './pages/InstancesPage';
 import TasksPage from './pages/TasksPage';
 
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/workflows" element={<WorkflowsPage />} />
+          <Route path="/workflows/new" element={<NewWorkflow />} />
           <Route path="/workflows/:id" element={<WorkflowDetail />} />
           <Route path="/instances" element={<InstancesPage />} />
           <Route path="/tasks" element={<TasksPage />} />
