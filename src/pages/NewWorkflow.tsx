@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import WorkflowVisualizer from '../components/workflow/WorkflowVisualizer';
 import ValidationPanel from '../components/workflow/ValidationPanel';
 import StepConfigPanel from '../components/workflow/StepConfigPanel';
+import WorkflowToolbar from '../components/workflow/WorkflowToolbar';
 import { WorkflowDefinition, WorkflowStep, WorkflowTransition } from '../types';
 import { workflowService } from '../services';
 import { useUser } from '../context/UserContext';
@@ -226,6 +227,7 @@ const NewWorkflow: React.FC = () => {
               </div>
             ) : (
               <DndProvider backend={HTML5Backend}>
+                <WorkflowToolbar onAddStep={addStep} />
                 <WorkflowVisualizer
                   workflow={workflow}
                   isInteractive={true}
