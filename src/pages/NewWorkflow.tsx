@@ -224,7 +224,7 @@ const NewWorkflow: React.FC = () => {
             ) : (
               <WorkflowVisualizer
                 workflow={workflow}
-                isInteractive
+                isInteractive={true}
                 onStepMove={handleStepMove}
                 onStepDelete={handleStepDelete}
                 onTransitionCreate={handleTransitionCreate}
