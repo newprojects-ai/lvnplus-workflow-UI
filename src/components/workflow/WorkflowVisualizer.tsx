@@ -134,6 +134,17 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     return 'pending';
   };
 
+  const getStatusClass = (status: 'completed' | 'active' | 'pending'): string => {
+    switch (status) {
+      case 'completed':
+        return 'border-green-500 bg-green-50';
+      case 'active':
+        return 'border-blue-500 bg-blue-50';
+      default:
+        return 'border-gray-300 bg-white';
+    }
+  };
+
   const handleStepDragStart = (stepId: string) => {
     if (!isInteractive) return;
     // Don't start transition on drag
@@ -291,56 +302,61 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
         </svg>
         
         {/* Draw Steps */}
-        {workflow.steps.map(step => (
-          <div
-            key={step.id}
-            className={`group absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
-              selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
-            } ${onStepSelect ? 'cursor-pointer' : ''}`}
-            onClick={() => onStepSelect?.(step.id)}
-            onMouseEnter={() => setHoveredStep(step.id)}
-            onMouseLeave={() => setHoveredStep(null)}
-            style={{
-              left: step.position.x,
-              top: step.position.y,
-              width: 120,
-              height: 80,
-              opacity: isDragging ? 0.5 : 1
-            }}
-          >
-            {isInteractive && (
-              <button
-                className={`absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
-                  isCreatingTransition && transitionStart === step.id ? 'opacity-100 bg-green-500' : ''
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConnectorClick(step.id);
-                }}
-              >
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
-            {hoveredStep === step.id && isCreatingTransition && transitionStart !== step.id && (
-              <div className="absolute inset-0 bg-blue-100 bg-opacity-50 rounded-md border-2 border-blue-500 border-dashed">
-                <div className="absolute inset-0 flex items-center justify-center text-blue-500">Connect</div>
-              </div>
-            )}
-            {isInteractive && step.type !== 'start' && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStepDelete?.(step.id);
-                }}
-                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                ×
-              </button>
-            )}
-            <div className="text-sm font-medium">{step.name}</div>
-            <div className="text-xs text-gray-500">{step.type}</div>
-          </div>
-        ))}
+        {workflow.steps.map(step => {
+          const status = getStepStatus(step.id);
+          const statusClass = getStatusClass(status);
+          
+          return (
+            <div
+              key={step.id}
+              className={`group absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
+                selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
+              } ${onStepSelect ? 'cursor-pointer' : ''}`}
+              onClick={() => onStepSelect?.(step.id)}
+              onMouseEnter={() => setHoveredStep(step.id)}
+              onMouseLeave={() => setHoveredStep(null)}
+              style={{
+                left: step.position.x,
+                top: step.position.y,
+                width: 120,
+                height: 80,
+                opacity: isDragging ? 0.5 : 1
+              }}
+            >
+              {isInteractive && (
+                <button
+                  className={`absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
+                    isCreatingTransition && transitionStart === step.id ? 'opacity-100 bg-green-500' : ''
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConnectorClick(step.id);
+                  }}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+              {hoveredStep === step.id && isCreatingTransition && transitionStart !== step.id && (
+                <div className="absolute inset-0 bg-blue-100 bg-opacity-50 rounded-md border-2 border-blue-500 border-dashed">
+                  <div className="absolute inset-0 flex items-center justify-center text-blue-500">Connect</div>
+                </div>
+              )}
+              {isInteractive && step.type !== 'start' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStepDelete?.(step.id);
+                  }}
+                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ×
+                </button>
+              )}
+              <div className="text-sm font-medium">{step.name}</div>
+              <div className="text-xs text-gray-500">{step.type}</div>
+            </div>
+          );
+        })}
         
         {isCreatingTransition && transitionStart && (
           <line
