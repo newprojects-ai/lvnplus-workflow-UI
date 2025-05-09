@@ -65,5 +65,3 @@ export abstract class BaseRepository<T> implements IRepository<T> {
   protected abstract mapToModel(data: any): T;
   protected abstract mapFromModel(model: T): any;
 }
-
-export { BaseRepository }
