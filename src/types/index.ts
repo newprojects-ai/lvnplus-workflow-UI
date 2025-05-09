@@ -14,11 +14,32 @@ export interface WorkflowDefinition {
 export interface WorkflowStep {
   id: string;
   name: string;
-  type: 'start' | 'task' | 'decision' | 'end';
+  type: 'start' | 'task' | 'service' | 'script' | 'decision' | 'timer' | 'message' | 'notification' | 'error' | 'end';
   position: { x: number; y: number };
   config?: {
     form?: {
       fields: FormField[];
+    };
+    service?: {
+      type: 'rest' | 'graphql' | 'grpc';
+      endpoint: string;
+      method?: string;
+      headers?: Record<string, string>;
+      body?: string;
+    };
+    script?: {
+      language: 'javascript' | 'python';
+      code: string;
+    };
+    timer?: {
+      type: 'delay' | 'schedule';
+      value: string;
+      timezone?: string;
+    };
+    message?: {
+      type: 'email' | 'sms' | 'push';
+      template: string;
+      recipients: string[];
     };
   };
 }
