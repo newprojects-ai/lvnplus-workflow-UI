@@ -33,6 +33,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   const [isCreatingTransition, setIsCreatingTransition] = useState(false);
   const [transitionStart, setTransitionStart] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [stepPositions, setStepPositions] = useState<Record<string, { x: number; y: number }>>({});
 
   // Calculate canvas size based on steps
   useEffect(() => {
@@ -153,7 +154,13 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
 
   const handleStepMove = useCallback((stepId: string, position: { x: number; y: number }) => {
     if (!isInteractive) return;
-    onStepMove?.(stepId, position);
+    setStepPositions(prev => ({
+      ...prev,
+      [stepId]: position
+    }));
+    if (onStepMove) {
+      onStepMove(stepId, position);
+    }
   }, [isInteractive, onStepMove]);
 
   return (
