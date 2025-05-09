@@ -77,9 +77,13 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
 
   const handleWheel = (e: React.WheelEvent) => {
     if (!isInteractive) return;
-    e.preventDefault();
-    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    setScale(Math.max(0.1, Math.min(2, scale * scaleFactor)));
+    
+    // Only handle zoom when Ctrl key is pressed
+    if (e.ctrlKey) {
+      e.preventDefault();
+      const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      setScale(Math.max(0.1, Math.min(2, scale * scaleFactor)));
+    }
   };
 
   const getStepColorByType = (type: string): string => {
@@ -123,17 +127,20 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
       {isInteractive && (
         <div className="absolute top-2 right-2 z-10 bg-white rounded-md shadow p-1 flex space-x-1">
           <button
-            onClick={() => setScale(scale + 0.1)}
+            onClick={() => setScale(prev => Math.min(2, prev + 0.1))}
             className="text-blue-600 hover:bg-blue-50 p-1 rounded"
           >
             +
           </button>
           <button
-            onClick={() => setScale(Math.max(0.1, scale - 0.1))}
+            onClick={() => setScale(prev => Math.max(0.1, prev - 0.1))}
             className="text-blue-600 hover:bg-blue-50 p-1 rounded"
           >
             -
           </button>
+          <div className="text-xs text-gray-600 px-2 py-1">
+            {Math.round(scale * 100)}%
+          </div>
           <button
             onClick={() => {
               setScale(1);
