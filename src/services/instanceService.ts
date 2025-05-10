@@ -164,5 +164,3 @@ class InstanceService {
 
 const instanceService = new InstanceService();
 export default instanceService;
-
-export default instanceService
