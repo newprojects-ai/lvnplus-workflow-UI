@@ -3,106 +3,133 @@ import { supabase } from '../repositories/supabase/SupabaseClient';
 
 class WorkflowService {
   async getWorkflows(): Promise<WorkflowDefinition[]> {
-    const { data, error } = await supabase
-      .from('workflows')
-      .select(`
-        *,
-        steps:workflow_steps(*),
-        transitions:workflow_transitions(*),
-        variables:workflow_variables(*),
-        error_handlers:workflow_error_handlers(*)
-      `)
-      .order('createdAt', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select(`
+          *,
+          steps:workflow_steps(*),
+          transitions:workflow_transitions(*),
+          variables:workflow_variables(*),
+          error_handlers:workflow_error_handlers(*)
+        `)
+        .order('createdAt', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching workflows:', error);
-      throw error;
+      if (error) {
+        console.error('Supabase error fetching workflows:', error);
+        throw new Error(`Failed to fetch workflows: ${error.message}`);
+      }
+
+      if (!data) {
+        return [];
+      }
+
+      return data.map(this.mapToWorkflowDefinition);
+    } catch (error) {
+      console.error('Error in getWorkflows:', error);
+      throw new Error('Failed to fetch workflows. Please check your connection and try again.');
     }
-
-    return data.map(this.mapToWorkflowDefinition);
   }
 
   async getWorkflowById(id: string): Promise<WorkflowDefinition | null> {
-    const { data, error } = await supabase
-      .from('workflows')
-      .select(`
-        *,
-        steps:workflow_steps(*),
-        transitions:workflow_transitions(*),
-        variables:workflow_variables(*),
-        error_handlers:workflow_error_handlers(*)
-      `)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select(`
+          *,
+          steps:workflow_steps(*),
+          transitions:workflow_transitions(*),
+          variables:workflow_variables(*),
+          error_handlers:workflow_error_handlers(*)
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error || !data) {
-      console.error('Error fetching workflow:', error);
-      return null;
+      if (error) {
+        console.error('Supabase error fetching workflow:', error);
+        throw new Error(`Failed to fetch workflow: ${error.message}`);
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return this.mapToWorkflowDefinition(data);
+    } catch (error) {
+      console.error('Error in getWorkflowById:', error);
+      throw new Error('Failed to fetch workflow. Please check your connection and try again.');
     }
-
-    return this.mapToWorkflowDefinition(data);
   }
 
   async createWorkflow(workflow: Omit<WorkflowDefinition, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkflowDefinition> {
-    // First create the workflow
-    const { data: workflowData, error: workflowError } = await supabase
-      .from('workflows')
-      .insert({
-        name: workflow.name,
-        description: workflow.description,
-        version: workflow.version,
-        status: workflow.status,
-        created_by: workflow.createdBy
-      })
-      .select()
-      .single();
+    try {
+      // First create the workflow
+      const { data: workflowData, error: workflowError } = await supabase
+        .from('workflows')
+        .insert({
+          name: workflow.name,
+          description: workflow.description,
+          version: workflow.version,
+          status: workflow.status,
+          created_by: workflow.createdBy
+        })
+        .select()
+        .single();
 
-    if (workflowError || !workflowData) {
-      console.error('Error creating workflow:', workflowError);
-      throw workflowError;
-    }
-
-    // Then create steps
-    if (workflow.steps.length > 0) {
-      const { error: stepsError } = await supabase
-        .from('workflow_steps')
-        .insert(
-          workflow.steps.map(step => ({
-            workflow_id: workflowData.id,
-            name: step.name,
-            type: step.type,
-            position: step.position,
-            config: step.config
-          }))
-        );
-
-      if (stepsError) {
-        console.error('Error creating steps:', stepsError);
-        throw stepsError;
+      if (workflowError || !workflowData) {
+        console.error('Error creating workflow:', workflowError);
+        throw new Error(`Failed to create workflow: ${workflowError?.message}`);
       }
-    }
 
-    // Finally create transitions
-    if (workflow.transitions.length > 0) {
-      const { error: transitionsError } = await supabase
-        .from('workflow_transitions')
-        .insert(
-          workflow.transitions.map(transition => ({
-            workflow_id: workflowData.id,
-            from_step_id: transition.from,
-            to_step_id: transition.to,
-            condition: transition.condition
-          }))
-        );
+      // Then create steps
+      if (workflow.steps.length > 0) {
+        const { error: stepsError } = await supabase
+          .from('workflow_steps')
+          .insert(
+            workflow.steps.map(step => ({
+              workflow_id: workflowData.id,
+              name: step.name,
+              type: step.type,
+              position: step.position,
+              config: step.config
+            }))
+          );
 
-      if (transitionsError) {
-        console.error('Error creating transitions:', transitionsError);
-        throw transitionsError;
+        if (stepsError) {
+          console.error('Error creating steps:', stepsError);
+          throw new Error(`Failed to create workflow steps: ${stepsError.message}`);
+        }
       }
-    }
 
-    // Return the complete workflow
-    return this.getWorkflowById(workflowData.id) as Promise<WorkflowDefinition>;
+      // Finally create transitions
+      if (workflow.transitions.length > 0) {
+        const { error: transitionsError } = await supabase
+          .from('workflow_transitions')
+          .insert(
+            workflow.transitions.map(transition => ({
+              workflow_id: workflowData.id,
+              from_step_id: transition.from,
+              to_step_id: transition.to,
+              condition: transition.condition
+            }))
+          );
+
+        if (transitionsError) {
+          console.error('Error creating transitions:', transitionsError);
+          throw new Error(`Failed to create workflow transitions: ${transitionsError.message}`);
+        }
+      }
+
+      // Return the complete workflow
+      const newWorkflow = await this.getWorkflowById(workflowData.id);
+      if (!newWorkflow) {
+        throw new Error('Failed to retrieve created workflow');
+      }
+      return newWorkflow;
+    } catch (error) {
+      console.error('Error in createWorkflow:', error);
+      throw new Error('Failed to create workflow. Please check your connection and try again.');
+    }
   }
 
   private mapToWorkflowDefinition(data: any): WorkflowDefinition {
