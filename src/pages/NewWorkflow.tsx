@@ -9,6 +9,7 @@ import WorkflowVisualizer from '../components/workflow/WorkflowVisualizer';
 import ValidationPanel from '../components/workflow/ValidationPanel';
 import StepConfigPanel from '../components/workflow/StepConfigPanel';
 import WorkflowToolbar from '../components/workflow/WorkflowToolbar';
+import RoleGuard from '../components/auth/RoleGuard';
 import { WorkflowDefinition, WorkflowStep, WorkflowTransition } from '../types';
 import { workflowService } from '../services';
 import { useUser } from '../context/UserContext';
@@ -152,7 +153,7 @@ const NewWorkflow: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout requiredPermissions={['workflow:create']}>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Create New Workflow</h1>
         <p className="text-gray-600 mt-1">Design your workflow process</p>
@@ -194,22 +195,24 @@ const NewWorkflow: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium text-gray-900">Workflow Design</h2>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addStep('task')}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Task
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addStep('decision')}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Decision
-                </Button>
+                <RoleGuard permissions={['workflow:edit']}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addStep('task')}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Task
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addStep('decision')}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Decision
+                  </Button>
+                </RoleGuard>
               </div>
             </div>
 
