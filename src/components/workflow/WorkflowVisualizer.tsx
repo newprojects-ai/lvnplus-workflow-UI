@@ -45,6 +45,43 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   const [connectorType, setConnectorType] = useState<'straight' | 'curved' | 'orthogonal'>('curved');
   const [hoveredStep, setHoveredStep] = useState<string | null>(null);
 
+  const handleTransitionCreate = (fromId: string, toId: string) => {
+    // Prevent self-transitions
+    if (fromId === toId) return;
+    
+    // Prevent duplicate transitions
+    if (workflow.transitions.some(t => t.from === fromId && t.to === toId)) return;
+    
+    // Get the source step
+    const fromStep = workflow.steps.find(s => s.id === fromId);
+    
+    // For decision steps, prompt for condition
+    let condition = undefined;
+    if (fromStep?.type === 'decision') {
+      condition = prompt('Enter condition for this transition (e.g., status === "approved")');
+      if (!condition) return; // Cancel if no condition provided
+    }
+    
+    const newTransition = {
+      id: `transition-${Date.now()}`,
+      from: fromId,
+      to: toId,
+      condition
+    };
+
+    setWorkflow(prev => ({
+      ...prev,
+      transitions: [...prev.transitions, newTransition]
+    }));
+  };
+
+  const getTransitionLabel = (transition: WorkflowTransition) => {
+    if (!transition.condition) return '';
+    return transition.condition.length > 20 
+      ? transition.condition.substring(0, 20) + '...'
+      : transition.condition;
+  };
+
   // Calculate canvas size based on steps
   useEffect(() => {
     if (!canvasRef.current || !workflow.steps.length) return;
@@ -266,23 +303,12 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
             
             if (!fromStep || !toStep) return null;
             
+            const isDecisionTransition = fromStep.type === 'decision';
+            
             const fromX = fromStep.position.x + 60;
             const fromY = fromStep.position.y + 40;
             const toX = toStep.position.x + 60;
             const toY = toStep.position.y + 40;
-            
-            // Determine the color based on status
-            let color = '#94a3b8';
-            if (instance) {
-              const fromStatus = getStepStatus(fromStep.id);
-              const toStatus = getStepStatus(toStep.id);
-              
-              if (fromStatus === 'completed' && toStatus === 'completed') {
-                color = '#2ecc71'; // Green for completed
-              } else if (fromStatus === 'completed' && toStatus === 'active') {
-                color = '#3498db'; // Blue for active
-              }
-            }
             
             return (
               <ConnectionLine
@@ -292,9 +318,9 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                 toX={toX}
                 toY={toY}
                 type={connectorType}
-                color={color}
-                dashed={!!transition.condition}
-                condition={transition.condition}
+                color={isDecisionTransition ? '#f59e0b' : '#94a3b8'}
+                dashed={isDecisionTransition}
+                condition={getTransitionLabel(transition)}
                 onClick={() => onTransitionDelete?.(transition.id)}
               />
             );
