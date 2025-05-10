@@ -146,27 +146,6 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     setDragStart({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !isInteractive) return;
-    
-    // Get canvas bounds
-    const canvas = canvasRef.current?.getBoundingClientRect();
-    if (!canvas) return;
-    
-    // Calculate mouse position relative to canvas
-    const x = (e.clientX - canvas.left) / scale;
-    const y = (e.clientY - canvas.top) / scale;
-    setMousePos({ x, y });
-    
-    const dx = e.clientX - dragStart.x;
-    const dy = e.clientY - dragStart.y;
-    setPanOffset({
-      x: panOffset.x + dx,
-      y: panOffset.y + dy
-    });
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
   const handleMouseUp = () => {
     setIsDragging(false);
   };
