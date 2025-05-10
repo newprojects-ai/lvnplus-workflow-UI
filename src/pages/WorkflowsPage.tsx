@@ -3,11 +3,13 @@ import Layout from '../components/layout/Layout';
 import WorkflowList from '../components/workflows/WorkflowList';
 import { WorkflowDefinition } from '../types';
 import { workflowService } from '../services';
+import { useRBAC } from '../hooks/useRBAC';
 
 const WorkflowsPage: React.FC = () => {
   const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { hasPermission } = useRBAC();
 
   useEffect(() => {
     const fetchWorkflows = async () => {
@@ -55,7 +57,7 @@ const WorkflowsPage: React.FC = () => {
   }
 
   return (
-    <Layout>
+    <Layout requiredPermissions={['workflow:read']}>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
         <p className="text-gray-600 mt-1">
