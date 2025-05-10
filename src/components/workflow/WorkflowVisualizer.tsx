@@ -44,6 +44,8 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [connectorType, setConnectorType] = useState<'straight' | 'curved' | 'orthogonal'>('curved');
   const [hoveredStep, setHoveredStep] = useState<string | null>(null);
+  const [hoveredTransition, setHoveredTransition] = useState<string | null>(null);
+  const [connectionPreview, setConnectionPreview] = useState<{ x: number; y: number } | null>(null);
 
   const handleTransitionCreate = (fromId: string, toId: string) => {
     // Prevent self-transitions
@@ -73,6 +75,32 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
       ...prev,
       transitions: [...prev.transitions, newTransition]
     }));
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging && !isInteractive) return;
+    
+    // Get canvas bounds
+    const canvas = canvasRef.current?.getBoundingClientRect();
+    if (!canvas) return;
+    
+    // Calculate mouse position relative to canvas
+    const x = (e.clientX - canvas.left) / scale;
+    const y = (e.clientY - canvas.top) / scale;
+    
+    if (isCreatingTransition) {
+      setConnectionPreview({ x, y });
+    }
+    
+    if (isDragging) {
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      setPanOffset({
+        x: panOffset.x + dx,
+        y: panOffset.y + dy
+      });
+      setDragStart({ x: e.clientX, y: e.clientY });
+    }
   };
 
   const getTransitionLabel = (transition: WorkflowTransition) => {
@@ -301,8 +329,14 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
             const fromStep = workflow.steps.find(s => s.id === transition.from);
             const toStep = workflow.steps.find(s => s.id === transition.to);
             
-            const isDecisionTransition = fromStep?.type === 'decision';
-            const transitionColor = isDecisionTransition ? '#f59e0b' : '#94a3b8';
+            let transitionColor;
+            if (fromStep?.type === 'decision') {
+              transitionColor = '#f59e0b';
+            } else if (fromStep?.type === 'error') {
+              transitionColor = '#ef4444';
+            } else {
+              transitionColor = '#94a3b8';
+            }
             
             if (!fromStep || !toStep) return null;
             
@@ -320,12 +354,32 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                 toY={toY}
                 type={connectorType}
                 color={transitionColor}
-                dashed={isDecisionTransition}
+                dashed={fromStep.type === 'decision'}
+                isHighlighted={hoveredTransition === transition.id}
                 condition={getTransitionLabel(transition)}
-                onClick={() => onTransitionDelete?.(transition.id)}
+                onClick={() => {
+                  if (isInteractive) {
+                    onTransitionDelete?.(transition.id);
+                  }
+                }}
+                onMouseEnter={() => setHoveredTransition(transition.id)}
+                onMouseLeave={() => setHoveredTransition(null)}
               />
             );
           })}
+          
+          {/* Preview connection line while creating transition */}
+          {isCreatingTransition && transitionStart && connectionPreview && (
+            <ConnectionLine
+              fromX={workflow.steps.find(s => s.id === transitionStart)?.position.x || 0}
+              fromY={workflow.steps.find(s => s.id === transitionStart)?.position.y || 0}
+              toX={connectionPreview.x}
+              toY={connectionPreview.y}
+              type={connectorType}
+              color="#94a3b8"
+              dashed={true}
+            />
+          )}
         </svg>
         
         {/* Draw Steps */}
