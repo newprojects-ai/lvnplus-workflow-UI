@@ -1,6 +1,18 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
-import { X } from 'lucide-react';
+import { 
+  X, 
+  PlayCircle, 
+  Flag, 
+  CheckSquare, 
+  Code, 
+  GitBranch, 
+  Timer, 
+  MessageSquare, 
+  AlertTriangle, 
+  Workflow,
+  Bell
+} from 'lucide-react';
 import { WorkflowStep as WorkflowStepType } from '../../types';
 
 interface WorkflowStepProps {
@@ -55,11 +67,33 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
 
   const getStepColorByType = (type: string): string => {
     switch (type) {
-      case 'start': return '#2ecc71'; // Green
-      case 'end': return '#e74c3c'; // Red
-      case 'task': return '#3498db'; // Blue
-      case 'decision': return '#f39c12'; // Yellow
-      default: return '#95a5a6'; // Gray
+      case 'start': return 'bg-emerald-500';
+      case 'end': return 'bg-red-500';
+      case 'task': return 'bg-blue-500';
+      case 'service': return 'bg-purple-500';
+      case 'script': return 'bg-gray-700';
+      case 'decision': return 'bg-amber-500';
+      case 'timer': return 'bg-cyan-500';
+      case 'message': return 'bg-indigo-500';
+      case 'notification': return 'bg-pink-500';
+      case 'error': return 'bg-red-600';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getStepIcon = (type: string): JSX.Element => {
+    switch (type) {
+      case 'start': return <PlayCircle className="h-5 w-5 text-white" />;
+      case 'end': return <Flag className="h-5 w-5 text-white" />;
+      case 'task': return <CheckSquare className="h-5 w-5 text-white" />;
+      case 'service': return <Workflow className="h-5 w-5 text-white" />;
+      case 'script': return <Code className="h-5 w-5 text-white" />;
+      case 'decision': return <GitBranch className="h-5 w-5 text-white" />;
+      case 'timer': return <Timer className="h-5 w-5 text-white" />;
+      case 'message': return <MessageSquare className="h-5 w-5 text-white" />;
+      case 'notification': return <Bell className="h-5 w-5 text-white" />;
+      case 'error': return <AlertTriangle className="h-5 w-5 text-white" />;
+      default: return <Workflow className="h-5 w-5 text-white" />;
     }
   };
 
@@ -74,8 +108,6 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
     default:
       statusClass = 'border-gray-300 bg-white';
   }
-
-  const stepColor = getStepColorByType(step.type);
 
   return (
     <div
@@ -107,13 +139,9 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
         </button>
       )}
       <div 
-        className="w-8 h-8 rounded-full flex items-center justify-center mb-2"
-        style={{ backgroundColor: stepColor }}
+        className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${getStepColorByType(step.type)}`}
       >
-        {step.type === 'start' && <span className="text-white">S</span>}
-        {step.type === 'end' && <span className="text-white">E</span>}
-        {step.type === 'task' && <span className="text-white">T</span>}
-        {step.type === 'decision' && <span className="text-white">D</span>}
+        {getStepIcon(step.type)}
       </div>
       <span className="text-xs font-medium text-gray-900 text-center line-clamp-2">
         {step.name}
