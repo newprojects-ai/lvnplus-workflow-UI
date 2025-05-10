@@ -16,7 +16,7 @@ export class SupabaseWorkflowRepository extends BaseRepository<WorkflowDefinitio
         steps:workflow_steps(*),
         transitions:workflow_transitions(*)
       `)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return this.mapToWorkflowDefinitions(data);
@@ -57,8 +57,8 @@ export class SupabaseWorkflowRepository extends BaseRepository<WorkflowDefinitio
       version: model.version,
       status: model.status,
       created_by: model.createdBy,
-      "createdAt": model.createdAt.toISOString(),
-      "updatedAt": model.updatedAt.toISOString()
+      createdAt: model.createdAt.toISOString(),
+      updatedAt: model.updatedAt.toISOString()
     };
   }
 

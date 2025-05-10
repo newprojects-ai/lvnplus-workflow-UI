@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
             variables:workflow_variables(*),
             error_handlers:workflow_error_handlers(*)
           `)
-          .order('created_at', { ascending: false });
+          .order('createdAt', { ascending: false });
 
         if (error) throw error;
 
