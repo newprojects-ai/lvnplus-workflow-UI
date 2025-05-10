@@ -4,6 +4,7 @@ import WorkflowList from '../components/workflows/WorkflowList';
 import { WorkflowDefinition } from '../types';
 import { workflowService } from '../services';
 import { useRBAC } from '../hooks/useRBAC';
+import { checkSupabaseConnection } from '../repositories/supabase/SupabaseClient';
 
 const WorkflowsPage: React.FC = () => {
   const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
@@ -15,11 +16,19 @@ const WorkflowsPage: React.FC = () => {
     const fetchWorkflows = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+
+        // First check if we can connect to Supabase
+        const isConnected = await checkSupabaseConnection();
+        if (!isConnected) {
+          throw new Error('Unable to connect to the database. Please check your connection and try again.');
+        }
+
         const data = await workflowService.getWorkflows();
         setWorkflows(data);
       } catch (err) {
         console.error('Error fetching workflows:', err);
-        setError('Failed to load workflows. Please try again later.');
+        setError(err instanceof Error ? err.message : 'Failed to load workflows. Please try again later.');
       } finally {
         setIsLoading(false);
       }
@@ -46,7 +55,7 @@ const WorkflowsPage: React.FC = () => {
             <p className="text-red-600">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
               Retry
             </button>
