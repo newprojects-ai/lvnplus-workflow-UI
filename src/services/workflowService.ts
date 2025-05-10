@@ -14,7 +14,7 @@ class WorkflowService {
           error_handlers:workflow_error_handlers(*),
           created_by:users(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
       if (error) {
         console.error('Supabase error fetching workflows:', error);
@@ -143,8 +143,8 @@ class WorkflowService {
       status: data.status,
       steps: data.steps?.map(this.mapStep) || [],
       transitions: data.transitions?.map(this.mapTransition) || [],
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
       createdBy: data.created_by
     };
   }
