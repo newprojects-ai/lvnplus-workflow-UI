@@ -26,6 +26,12 @@ class RoleService {
   }
 
   async getUserRoles(userId: string): Promise<Role[]> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      throw new Error('Invalid UUID format for user ID');
+    }
+
     const { data, error } = await supabase
       .from('user_roles')
       .select(`
@@ -33,11 +39,23 @@ class RoleService {
       `)
       .eq('user_id', userId);
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    if (!data) return [];
+    
     return data.map(item => this.mapToRole(item.role));
   }
 
   async assignRole(userId: string, roleId: string): Promise<void> {
+    // Validate UUID format for both IDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId) || !uuidRegex.test(roleId)) {
+      throw new Error('Invalid UUID format');
+    }
+
     const { error } = await supabase
       .from('user_roles')
       .insert({ user_id: userId, role_id: roleId });
@@ -46,6 +64,12 @@ class RoleService {
   }
 
   async removeRole(userId: string, roleId: string): Promise<void> {
+    // Validate UUID format for both IDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId) || !uuidRegex.test(roleId)) {
+      throw new Error('Invalid UUID format');
+    }
+
     const { error } = await supabase
       .from('user_roles')
       .delete()
@@ -56,6 +80,12 @@ class RoleService {
   }
 
   async getRolePermissions(roleId: string): Promise<Permission[]> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(roleId)) {
+      throw new Error('Invalid UUID format for role ID');
+    }
+
     const { data, error } = await supabase
       .from('role_permissions')
       .select('*')

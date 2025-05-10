@@ -10,7 +10,7 @@ export function useRBAC() {
 
   useEffect(() => {
     const loadUserRoles = async () => {
-      if (!currentUser) {
+      if (!currentUser?.id || typeof currentUser.id !== 'string') {
         setRoles([]);
         setPermissions(new Set());
         setIsLoading(false);
@@ -18,6 +18,12 @@ export function useRBAC() {
       }
 
       try {
+        // Validate UUID format before making the request
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(currentUser.id)) {
+          throw new Error('Invalid UUID format for user ID');
+        }
+
         const userRoles = await roleService.getUserRoles(currentUser.id);
         setRoles(userRoles);
 
@@ -33,6 +39,8 @@ export function useRBAC() {
         setPermissions(allPermissions);
       } catch (error) {
         console.error('Error loading user roles:', error);
+        setRoles([]);
+        setPermissions(new Set());
       } finally {
         setIsLoading(false);
       }
