@@ -8,9 +8,13 @@ import { LayoutDashboard, Workflow, Check, PlayCircle } from 'lucide-react';
 import { DashboardStats, Activity, Task, User } from '../types';
 import { reportService, taskService, userService } from '../services';
 import { useUser } from '../context/UserContext';
+import { useRBAC } from '../hooks/useRBAC';
+import AdminDashboard from '../components/dashboard/AdminDashboard';
+import ManagerDashboard from '../components/dashboard/ManagerDashboard';
 
 const Dashboard: React.FC = () => {
   const { currentUser } = useUser();
+  const { isAdmin, hasRole } = useRBAC();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -59,6 +63,21 @@ const Dashboard: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Welcome back{currentUser ? `, ${currentUser.name}` : ''}!</p>
       </div>
+      
+      {/* Role-specific dashboards */}
+      {isAdmin() && <AdminDashboard />}
+      {!isAdmin() && hasRole('manager') && (
+        <ManagerDashboard
+          stats={{
+            activeWorkflows: stats?.activeInstances || 0,
+            pendingTasks: stats?.pendingTasks || 0,
+            activeUsers: users.length,
+            overdueTasks: tasks.filter(t => 
+              t.status === 'pending' && t.dueDate && new Date(t.dueDate) < new Date()
+            ).length
+          }}
+        />
+      )}
       
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
