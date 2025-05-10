@@ -20,8 +20,11 @@ const Layout: React.FC<LayoutProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-sm text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -32,8 +35,24 @@ const Layout: React.FC<LayoutProps> = ({
   );
 
   if (!hasAccess) {
-    navigate('/');
-    return null;
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-red-800 mb-2">Access Denied</h3>
+            <p className="text-sm text-red-600">
+              You don't have the required permissions to access this page.
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
