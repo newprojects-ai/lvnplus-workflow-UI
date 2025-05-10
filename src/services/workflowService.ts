@@ -11,9 +11,10 @@ class WorkflowService {
           steps:workflow_steps(*),
           transitions:workflow_transitions(*),
           variables:workflow_variables(*),
-          error_handlers:workflow_error_handlers(*)
+          error_handlers:workflow_error_handlers(*),
+          created_by:users(*)
         `)
-        .order('createdAt', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Supabase error fetching workflows:', error);
@@ -40,7 +41,8 @@ class WorkflowService {
           steps:workflow_steps(*),
           transitions:workflow_transitions(*),
           variables:workflow_variables(*),
-          error_handlers:workflow_error_handlers(*)
+          error_handlers:workflow_error_handlers(*),
+          created_by:users(*)
         `)
         .eq('id', id)
         .single();
@@ -141,8 +143,8 @@ class WorkflowService {
       status: data.status,
       steps: data.steps?.map(this.mapStep) || [],
       transitions: data.transitions?.map(this.mapTransition) || [],
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
       createdBy: data.created_by
     };
   }
