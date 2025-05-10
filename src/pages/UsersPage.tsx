@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import RoleManager from '../components/users/RoleManager';
 import { User } from '../types';
 import { userService } from '../services';
-import { Search, UserPlus, Edit2, Trash2 } from 'lucide-react';
+import { Search, UserPlus, Edit2, Trash2, Shield } from 'lucide-react';
+import { useRBAC } from '../hooks/useRBAC';
 
 const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { hasPermission } = useRBAC();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -89,70 +93,108 @@ const UsersPage: React.FC = () => {
               <option value="user">User</option>
             </select>
             
-            <Button>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
+            <RoleGuard permissions={['user:create']}>
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add User
+              </Button>
+            </RoleGuard>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-10 w-10 rounded-full"
-                        src={user.avatar}
-                        alt={user.name}
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">ID: {user.id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge
-                      label={user.role}
-                      variant={getRoleBadgeVariant(user.role)}
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="danger" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          className="h-10 w-10 rounded-full"
+                          src={user.avatar}
+                          alt={user.name}
+                        />
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                          <div className="text-sm text-gray-500">ID: {user.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{user.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        label={user.role}
+                        variant={getRoleBadgeVariant(user.role)}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <RoleGuard permissions={['user:manage']}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedUser(user.id)}
+                          >
+                            <Shield className="h-4 w-4" />
+                          </Button>
+                        </RoleGuard>
+                        <RoleGuard permissions={['user:update']}>
+                          <Button variant="outline" size="sm">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </RoleGuard>
+                        <RoleGuard permissions={['user:delete']}>
+                          <Button variant="danger" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </RoleGuard>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div>
+            {selectedUser ? (
+              <RoleManager 
+                userId={selectedUser} 
+                onUpdate={() => {
+                  // Refresh user list after role changes
+                  fetchUsers();
+                }}
+              />
+            ) : (
+              <Card>
+                <div className="text-center py-6">
+                  <Shield className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">
+                    Select a user to manage their roles
+                  </p>
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
       </Card>
     </Layout>
