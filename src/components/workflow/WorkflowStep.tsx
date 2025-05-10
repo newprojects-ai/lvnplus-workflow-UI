@@ -67,17 +67,17 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
 
   const getStepColorByType = (type: string): string => {
     switch (type) {
-      case 'start': return 'bg-emerald-500';
-      case 'end': return 'bg-red-500';
-      case 'task': return 'bg-blue-500';
-      case 'service': return 'bg-purple-500';
-      case 'script': return 'bg-gray-700';
-      case 'decision': return 'bg-amber-500';
-      case 'timer': return 'bg-cyan-500';
-      case 'message': return 'bg-indigo-500';
-      case 'notification': return 'bg-pink-500';
-      case 'error': return 'bg-red-600';
-      default: return 'bg-gray-500';
+      case 'start': return 'bg-emerald-500 shadow-emerald-200';
+      case 'end': return 'bg-red-500 shadow-red-200';
+      case 'task': return 'bg-blue-500 shadow-blue-200';
+      case 'service': return 'bg-purple-500 shadow-purple-200';
+      case 'script': return 'bg-gray-700 shadow-gray-200';
+      case 'decision': return 'bg-amber-500 shadow-amber-200';
+      case 'timer': return 'bg-cyan-500 shadow-cyan-200';
+      case 'message': return 'bg-indigo-500 shadow-indigo-200';
+      case 'notification': return 'bg-pink-500 shadow-pink-200';
+      case 'error': return 'bg-red-600 shadow-red-200';
+      default: return 'bg-gray-500 shadow-gray-200';
     }
   };
 
@@ -112,7 +112,7 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
   return (
     <div
       ref={isInteractive ? dragRef : null}
-      className={`absolute rounded-md border-2 shadow-sm ${statusClass} flex flex-col items-center p-3 transition-colors duration-300 ${
+      className={`absolute rounded-lg border-2 shadow-lg ${statusClass} flex flex-col items-center p-4 transition-all duration-300 transform hover:scale-105 ${
         selectedStepId === step.id ? 'ring-2 ring-blue-500' : ''
       } ${onStepSelect ? 'cursor-pointer' : ''}`}
       onClick={() => onStepSelect?.(step.id)}
@@ -139,11 +139,11 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
         </button>
       )}
       <div 
-        className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${getStepColorByType(step.type)}`}
+        className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 shadow-lg ${getStepColorByType(step.type)}`}
       >
         {getStepIcon(step.type)}
       </div>
-      <span className="text-xs font-medium text-gray-900 text-center line-clamp-2">
+      <span className="text-sm font-medium text-gray-900 text-center line-clamp-2">
         {step.name}
       </span>
     </div>

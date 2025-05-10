@@ -75,30 +75,54 @@ const ConnectionLine: React.FC<ConnectionLineProps> = ({
   return (
     <g onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <path
+        className="transition-all duration-300 hover:opacity-75"
         d={path}
         fill="none"
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="3"
         strokeDasharray={dashed ? "5,5" : "none"}
-        className="transition-colors duration-200"
+        filter="url(#glow)"
       />
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
       <polygon
         points={arrowPoints.map(point => point.join(',')).join(' ')}
         fill={color}
-        className="transition-colors duration-200"
+        className="transition-all duration-300"
+        filter="url(#glow)"
       />
       {condition && (
-        <text
-          x={(fromX + toX) / 2}
-          y={(fromY + toY) / 2 - 10}
-          fill="#475569"
-          fontSize="12"
-          textAnchor="middle"
-          dy=".3em"
-          className="pointer-events-none"
-        >
-          {condition}
-        </text>
+        <g transform={`translate(${(fromX + toX) / 2}, ${(fromY + toY) / 2 - 15})`}>
+          <rect
+            x="-50"
+            y="-12"
+            width="100"
+            height="24"
+            rx="4"
+            fill="white"
+            stroke={color}
+            strokeWidth="1"
+            className="opacity-90"
+          />
+          <text
+            x="0"
+            y="0"
+            fill="#475569"
+            fontSize="12"
+            textAnchor="middle"
+            dy=".3em"
+            className="pointer-events-none font-medium"
+          >
+            {condition}
+          </text>
+        </g>
       )}
     </g>
   );
