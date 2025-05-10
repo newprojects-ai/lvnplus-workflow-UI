@@ -50,11 +50,11 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     if (fromId === toId) return;
     
     // Get the source step
-    const fromStep = workflow.steps.find(s => s.id === fromId);
+    const sourceStep = workflow.steps.find(s => s.id === fromId);
     
     // For decision steps, prompt for condition
     let condition = undefined;
-    if (fromStep?.type === 'decision') {
+    if (sourceStep?.type === 'decision') {
       condition = prompt('Enter condition for this transition (e.g., status === "approved")');
       if (!condition) return; // Cancel if no condition provided
     }
@@ -62,20 +62,9 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
     // Prevent duplicate transitions
     if (workflow.transitions.some(t => t.from === fromId && t.to === toId)) return;
     
-    // Get the source step
-    const fromStep = workflow.steps.find(s => s.id === fromId);
-    
-    // For decision steps, prompt for condition
-    let condition = undefined;
-    if (fromStep?.type === 'decision') {
-      condition = prompt('Enter condition for this transition (e.g., status === "approved")');
-      if (!condition) return; // Cancel if no condition provided
-    }
-    
     const newTransition = {
       id: `transition-${Date.now()}`,
       from: fromId,
-      to: toId,
       to: toId,
       condition
     };
@@ -316,8 +305,6 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
             const transitionColor = isDecisionTransition ? '#f59e0b' : '#94a3b8';
             
             if (!fromStep || !toStep) return null;
-            
-            const isDecisionTransition = fromStep.type === 'decision';
             
             const fromX = fromStep.position.x + 60;
             const fromY = fromStep.position.y + 40;
