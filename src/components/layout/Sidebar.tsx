@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useRBAC } from '../../hooks/useRBAC';
 import { 
   LayoutDashboard, 
   Workflow, 
@@ -15,20 +16,67 @@ import {
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { hasPermission, isAdmin } = useRBAC();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  const navItems = [
+  // Base navigation items available to all authenticated users
+  const baseNavItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Workflows', path: '/workflows', icon: <Workflow size={20} /> },
-    { name: 'Instances', path: '/instances', icon: <PlayCircle size={20} /> },
-    { name: 'Tasks', path: '/tasks', icon: <CheckSquare size={20} /> },
-    { name: 'Reports', path: '/reports', icon: <BarChart3 size={20} /> },
-    { name: 'Users', path: '/users', icon: <Users size={20} /> },
-    { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
+    { 
+      name: 'Workflows', 
+      path: '/workflows', 
+      icon: <Workflow size={20} />,
+      permission: 'workflow:read'
+    },
+    { 
+      name: 'Tasks', 
+      path: '/tasks', 
+      icon: <CheckSquare size={20} />,
+      permission: 'task:read'
+    }
   ];
+
+  // Additional items for managers and admins
+  const managerNavItems = [
+    { 
+      name: 'Instances', 
+      path: '/instances', 
+      icon: <PlayCircle size={20} />,
+      permission: 'workflow:execute'
+    },
+    { 
+      name: 'Reports', 
+      path: '/reports', 
+      icon: <BarChart3 size={20} />,
+      permission: 'workflow:read'
+    }
+  ];
+
+  // Admin-only items
+  const adminNavItems = [
+    { 
+      name: 'Users', 
+      path: '/users', 
+      icon: <Users size={20} />,
+      permission: 'user:manage'
+    },
+    { 
+      name: 'Settings', 
+      path: '/settings', 
+      icon: <Settings size={20} />,
+      permission: 'user:manage'
+    }
+  ];
+
+  // Combine navigation items based on permissions
+  const navItems = [
+    ...baseNavItems,
+    ...managerNavItems,
+    ...(isAdmin() ? adminNavItems : [])
+  ].filter(item => !item.permission || hasPermission(item.permission));
 
   return (
     <div 

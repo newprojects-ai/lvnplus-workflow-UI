@@ -1,5 +1,6 @@
 import React from 'react';
 import Card from '../ui/Card';
+import { useRBAC } from '../../hooks/useRBAC';
 
 interface StatsCardProps {
   title: string;
@@ -9,7 +10,8 @@ interface StatsCardProps {
   change?: {
     value: number;
     type: 'increase' | 'decrease';
-  };
+  },
+  permission?: string;
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({
@@ -17,8 +19,15 @@ const StatsCard: React.FC<StatsCardProps> = ({
   value,
   icon,
   color,
-  change
+  change,
+  permission
 }) => {
+  const { hasPermission } = useRBAC();
+
+  if (permission && !hasPermission(permission)) {
+    return null;
+  }
+
   const colors = {
     blue: 'bg-blue-100 text-blue-600',
     green: 'bg-green-100 text-green-600',

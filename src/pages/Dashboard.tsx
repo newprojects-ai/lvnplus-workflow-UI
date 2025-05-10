@@ -67,6 +67,7 @@ const Dashboard: React.FC = () => {
             value={stats.totalWorkflows}
             icon={<Workflow className="h-6 w-6" />}
             color="blue"
+            permission="workflow:read"
           />
           <StatsCard
             title="Active Instances"
@@ -74,6 +75,7 @@ const Dashboard: React.FC = () => {
             icon={<PlayCircle className="h-6 w-6" />}
             color="green"
             change={{ value: 12, type: 'increase' }}
+            permission="workflow:execute"
           />
           <StatsCard
             title="Completed Instances"
@@ -81,6 +83,7 @@ const Dashboard: React.FC = () => {
             icon={<Check className="h-6 w-6" />}
             color="purple"
             change={{ value: 5, type: 'increase' }}
+            permission="workflow:execute"
           />
           <StatsCard
             title="Pending Tasks"
@@ -88,6 +91,7 @@ const Dashboard: React.FC = () => {
             icon={<LayoutDashboard className="h-6 w-6" />}
             color="red"
             change={{ value: 2, type: 'decrease' }}
+            permission="task:read"
           />
         </div>
       )}

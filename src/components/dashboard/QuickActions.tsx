@@ -1,38 +1,45 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useRBAC } from '../../hooks/useRBAC';
 import { Plus, PlayCircle, CheckCircle, FilePlus } from 'lucide-react';
 
 const QuickActions: React.FC = () => {
+  const { hasPermission } = useRBAC();
+
   const actions = [
     {
       title: 'Create Workflow',
       description: 'Design a new workflow process',
       icon: <Plus className="h-6 w-6" />,
       color: 'bg-blue-500',
-      link: '/workflows/new'
+      link: '/workflows/new',
+      permission: 'workflow:create'
     },
     {
       title: 'Start Process',
       description: 'Execute an existing workflow',
       icon: <PlayCircle className="h-6 w-6" />,
       color: 'bg-green-500',
-      link: '/instances/new'
+      link: '/instances/new',
+      permission: 'workflow:execute'
     },
     {
       title: 'Complete Tasks',
       description: 'View and complete assigned tasks',
       icon: <CheckCircle className="h-6 w-6" />,
       color: 'bg-purple-500',
-      link: '/tasks'
+      link: '/tasks',
+      permission: 'task:read'
     },
     {
       title: 'Generate Report',
       description: 'Create custom reports',
       icon: <FilePlus className="h-6 w-6" />,
       color: 'bg-amber-500',
-      link: '/reports'
+      link: '/reports',
+      permission: 'workflow:read'
     }
-  ];
+  ].filter(action => hasPermission(action.permission));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
