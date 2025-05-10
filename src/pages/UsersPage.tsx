@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import RoleGuard from '../components/auth/RoleGuard';
 import RoleManager from '../components/users/RoleManager';
 import { User } from '../types';
 import { userService } from '../services';
