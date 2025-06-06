@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <Layout>
-        <LoadingSpinner size="lg\" className="h-64" />
+        <LoadingSpinner size="lg" className="h-64" />
       </Layout>
     );
   }
@@ -87,14 +87,14 @@ const Dashboard: React.FC = () => {
           <MetricsCard
             title="Total Workflows"
             value={stats.totalWorkflows}
-            icon={<Workflow className="h-6 w-6" />}
+            icon={Workflow}
             color="blue"
             trend={{ value: 8, direction: 'up', period: 'vs last month' }}
           />
           <MetricsCard
             title="Active Instances"
             value={stats.activeInstances}
-            icon={<PlayCircle className="h-6 w-6" />}
+            icon={PlayCircle}
             color="green"
             trend={{ value: 12, direction: 'up', period: 'vs last week' }}
           />
