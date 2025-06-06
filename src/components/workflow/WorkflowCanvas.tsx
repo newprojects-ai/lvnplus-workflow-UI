@@ -93,14 +93,14 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     if (isReadOnly) return;
 
     // Calculate center position if not provided
-    const centerX = canvasSize.width / 2 - offset.x;
-    const centerY = canvasSize.height / 2 - offset.y;
+    const centerX = (canvasSize.width / 2 - offset.x) / scale;
+    const centerY = (canvasSize.height / 2 - offset.y) / scale;
 
     const newStep: WorkflowStep = {
       id: `step-${Date.now()}`,
       name: getDefaultStepName(type),
       type,
-      position: position || { x: centerX / scale, y: centerY / scale }
+      position: position || { x: centerX, y: centerY }
     };
 
     const updatedWorkflow = {
@@ -156,7 +156,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
   return (
     <div className="relative w-full h-full bg-gray-50 overflow-hidden">
-      {/* Canvas Toolbar */}
+      {/* Canvas Toolbar - Always show unless readonly */}
       {!isReadOnly && (
         <CanvasToolbar
           onAddElement={handleAddElement}
@@ -192,7 +192,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Start Building Your Workflow</h3>
-            <p className="text-gray-500 mb-4">Click "Add Element" to add your first workflow step</p>
+            <p className="text-gray-500 mb-4">Click "Add Element" in the toolbar to add your first workflow step</p>
             {!isReadOnly && (
               <div className="pointer-events-auto">
                 <button
