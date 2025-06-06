@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import Layout from '../components/layout/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import WorkflowVisualizer from '../components/workflow/WorkflowVisualizer';
+import WorkflowCanvas from '../components/workflow/WorkflowCanvas';
 import ValidationPanel from '../components/workflow/ValidationPanel';
 import StepConfigPanel from '../components/workflow/StepConfigPanel';
-import WorkflowToolbar from '../components/workflow/WorkflowToolbar';
 import RoleGuard from '../components/auth/RoleGuard';
-import { WorkflowDefinition, WorkflowStep, WorkflowTransition } from '../types';
+import { WorkflowDefinition, WorkflowStep } from '../types';
 import { workflowService } from '../services';
 import { useUser } from '../context/UserContext';
-import { Save, Plus, Workflow } from 'lucide-react';
+import { Save, ArrowLeft } from 'lucide-react';
 
 const NewWorkflow: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +18,7 @@ const NewWorkflow: React.FC = () => {
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [workflow, setWorkflow] = useState<WorkflowDefinition>({
     id: '',
-    name: '',
+    name: 'New Workflow',
     description: '',
     version: '1.0',
     status: 'draft',
@@ -45,8 +42,8 @@ const NewWorkflow: React.FC = () => {
         return;
       }
 
-      if (workflow.steps.length < 2) {
-        setError('Workflow must have at least a start and end step');
+      if (workflow.steps.length === 0) {
+        setError('Workflow must have at least one step');
         return;
       }
 
@@ -60,29 +57,8 @@ const NewWorkflow: React.FC = () => {
     }
   };
 
-  const addStep = (type: WorkflowStep['type']) => {
-    const newStep: WorkflowStep = {
-      id: `step-${Date.now()}`,
-      name: type === 'start' ? 'Start' : type === 'end' ? 'End' : `New ${type} Step`,
-      type,
-      position: {
-        x: 100 + workflow.steps.length * 200,
-        y: 200
-      }
-    };
-
-    if (type === 'task') {
-      newStep.config = {
-        form: {
-          fields: []
-        }
-      };
-    }
-
-    setWorkflow(prev => ({
-      ...prev,
-      steps: [...prev.steps, newStep]
-    }));
+  const handleWorkflowChange = (updatedWorkflow: WorkflowDefinition) => {
+    setWorkflow(updatedWorkflow);
   };
 
   const updateStep = (stepId: string, updates: Partial<WorkflowStep>) => {
@@ -94,222 +70,116 @@ const NewWorkflow: React.FC = () => {
     }));
   };
 
-  const addTransition = (fromId: string, toId: string) => {
-    const newTransition: WorkflowTransition = {
-      id: `transition-${Date.now()}`,
-      from: fromId,
-      to: toId
-    };
-
-    setWorkflow(prev => ({
-      ...prev,
-      transitions: [...prev.transitions, newTransition]
-    }));
-  };
-
-  const handleStepMove = (stepId: string, newPosition: { x: number; y: number }) => {
-    setWorkflow(prev => ({
-      ...prev,
-      steps: prev.steps.map(step =>
-        step.id === stepId ? { ...step, position: newPosition } : step
-      )
-    }));
-  };
-
-  const handleStepDelete = (stepId: string) => {
-    setWorkflow(prev => ({
-      ...prev,
-      steps: prev.steps.filter(step => step.id !== stepId),
-      transitions: prev.transitions.filter(t => 
-        t.from !== stepId && t.to !== stepId
-      )
-    }));
-  };
-
-  const handleTransitionCreate = (fromId: string, toId: string) => {
-    // Prevent self-transitions
-    if (fromId === toId) return;
-    
-    // Prevent duplicate transitions
-    if (workflow.transitions.some(t => t.from === fromId && t.to === toId)) return;
-    
-    const newTransition = {
-      id: `transition-${Date.now()}`,
-      from: fromId,
-      to: toId
-    };
-
-    setWorkflow(prev => ({
-      ...prev,
-      transitions: [...prev.transitions, newTransition]
-    }));
-  };
-
-  const handleTransitionDelete = (transitionId: string) => {
-    setWorkflow(prev => ({
-      ...prev,
-      transitions: prev.transitions.filter(t => t.id !== transitionId)
-    }));
-  };
+  const selectedStepData = selectedStep 
+    ? workflow.steps.find(s => s.id === selectedStep)
+    : null;
 
   return (
     <Layout requiredPermissions={['workflow:create']}>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create New Workflow</h1>
-        <p className="text-gray-600 mt-1">Design your workflow process</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/workflows')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Workflows
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Create New Workflow</h1>
+            <p className="text-gray-600">Design your automated business process</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/workflows')}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            isLoading={isLoading}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Workflow
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
-          <Card>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Workflow Name
-                </label>
-                <input
-                  type="text"
-                  value={workflow.name}
-                  onChange={(e) => setWorkflow(prev => ({ ...prev, name: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Enter workflow name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  value={workflow.description}
-                  onChange={(e) => setWorkflow(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Describe the purpose of this workflow"
-                />
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Workflow Design</h2>
-              <div className="flex gap-2">
-                <RoleGuard permissions={['workflow:edit']}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addStep('task')}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Task
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addStep('decision')}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Decision
-                  </Button>
-                </RoleGuard>
-              </div>
-            </div>
-
-            {workflow.steps.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <Workflow className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No steps added</h3>
-                <p className="mt-1 text-sm text-gray-500">Get started by adding a start step</p>
-                <div className="mt-6">
-                  <Button onClick={() => addStep('start')}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Start Step
-                  </Button>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
+        {/* Main Canvas Area */}
+        <div className="xl:col-span-3">
+          <Card className="h-full p-0 overflow-hidden">
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <input
+                    type="text"
+                    value={workflow.name}
+                    onChange={(e) => setWorkflow(prev => ({ ...prev, name: e.target.value }))}
+                    className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                    placeholder="Enter workflow name"
+                  />
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      value={workflow.description}
+                      onChange={(e) => setWorkflow(prev => ({ ...prev, description: e.target.value }))}
+                      className="text-sm text-gray-600 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 w-full"
+                      placeholder="Add a description..."
+                    />
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {workflow.steps.length} steps, {workflow.transitions.length} connections
                 </div>
               </div>
-            ) : (
-              <DndProvider backend={HTML5Backend}>
-                <WorkflowToolbar onAddStep={addStep} />
-                <WorkflowVisualizer
-                  workflow={workflow}
-                  isInteractive={true}
-                  onStepMove={handleStepMove}
-                  onStepDelete={handleStepDelete}
-                  onTransitionCreate={handleTransitionCreate}
-                  onTransitionDelete={handleTransitionDelete}
-                  onStepSelect={setSelectedStep}
-                  selectedStepId={selectedStep}
-                />
-              </DndProvider>
-            )}
+            </div>
+            
+            <div className="h-[calc(100%-80px)]">
+              <WorkflowCanvas
+                workflow={workflow}
+                onWorkflowChange={handleWorkflowChange}
+                selectedStepId={selectedStep}
+                onStepSelect={setSelectedStep}
+              />
+            </div>
           </Card>
         </div>
 
-        <div className="space-y-6">
-          {selectedStep ? (
+        {/* Right Panel */}
+        <div className="space-y-6 overflow-y-auto">
+          {selectedStepData ? (
             <StepConfigPanel
-              step={workflow.steps.find(s => s.id === selectedStep)!}
-              onUpdate={(updates) => updateStep(selectedStep, updates)}
+              step={selectedStepData}
+              onUpdate={(updates) => updateStep(selectedStep!, updates)}
             />
           ) : (
             <Card>
-              <div className="text-center py-6">
-                <p className="text-gray-500">Select a step to configure its properties</p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Save className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Step Selected</h3>
+                <p className="text-gray-500 text-sm">
+                  Select a step from the canvas to configure its properties and settings.
+                </p>
               </div>
             </Card>
           )}
 
           <ValidationPanel workflow={workflow} />
 
-          <Card>
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900">Workflow Details</h2>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Version</h3>
-                <p className="mt-1 text-lg font-medium">{workflow.version}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                <p className="mt-1 text-lg font-medium capitalize">{workflow.status}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Steps</h3>
-                <p className="mt-1 text-lg font-medium">{workflow.steps.length}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Transitions</h3>
-                <p className="mt-1 text-lg font-medium">{workflow.transitions.length}</p>
-              </div>
-            </div>
-          </Card>
-
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => navigate('/workflows')}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleSave}
-              isLoading={isLoading}
-            >
-              <Save className="h-4 w-4 mr-1" />
-              Save Workflow
-            </Button>
-          </div>
-
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
+            <Card>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            </Card>
           )}
         </div>
       </div>
