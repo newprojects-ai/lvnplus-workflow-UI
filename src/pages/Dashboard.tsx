@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <Layout>
-        <LoadingSpinner size="lg" className="h-64" />
+        <LoadingSpinner size="lg\" className="h-64" />
       </Layout>
     );
   }
