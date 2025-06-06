@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
-import StatsCard from '../components/dashboard/StatsCard';
+import MetricsCard from '../components/dashboard/MetricsCard';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ActivityList from '../components/dashboard/ActivityList';
 import TaskSummary from '../components/dashboard/TaskSummary';
 import QuickActions from '../components/dashboard/QuickActions';
-import { LayoutDashboard, Workflow, Check, PlayCircle } from 'lucide-react';
+import { LayoutDashboard, Workflow, Check, PlayCircle, TrendingUp } from 'lucide-react';
 import { DashboardStats, Activity, Task, User } from '../types';
 import { reportService, taskService, userService } from '../services';
 import { useUser } from '../context/UserContext';
@@ -50,18 +51,20 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <LoadingSpinner size="lg" className="h-64" />
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back{currentUser ? `, ${currentUser.name}` : ''}!</p>
+      <div className="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back{currentUser ? `, ${currentUser.name}` : ''}!
+        </h1>
+        <p className="text-blue-100">
+          Here's what's happening with your workflows today
+        </p>
       </div>
       
       {/* Role-specific dashboards */}
@@ -81,36 +84,33 @@ const Dashboard: React.FC = () => {
       
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
+          <MetricsCard
             title="Total Workflows"
             value={stats.totalWorkflows}
             icon={<Workflow className="h-6 w-6" />}
             color="blue"
-            permission="workflow:read"
+            trend={{ value: 8, direction: 'up', period: 'vs last month' }}
           />
-          <StatsCard
+          <MetricsCard
             title="Active Instances"
             value={stats.activeInstances}
             icon={<PlayCircle className="h-6 w-6" />}
             color="green"
-            change={{ value: 12, type: 'increase' }}
-            permission="workflow:execute"
+            trend={{ value: 12, direction: 'up', period: 'vs last week' }}
           />
-          <StatsCard
+          <MetricsCard
             title="Completed Instances"
             value={stats.completedInstances}
-            icon={<Check className="h-6 w-6" />}
+            icon={TrendingUp}
             color="purple"
-            change={{ value: 5, type: 'increase' }}
-            permission="workflow:execute"
+            trend={{ value: 5, direction: 'up', period: 'vs last week' }}
           />
-          <StatsCard
+          <MetricsCard
             title="Pending Tasks"
             value={stats.pendingTasks}
-            icon={<LayoutDashboard className="h-6 w-6" />}
+            icon={Check}
             color="red"
-            change={{ value: 2, type: 'decrease' }}
-            permission="task:read"
+            trend={{ value: 2, direction: 'down', period: 'vs yesterday' }}
           />
         </div>
       )}

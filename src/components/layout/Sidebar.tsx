@@ -80,17 +80,26 @@ const Sidebar: React.FC = () => {
 
   return (
     <div 
-      className={`${collapsed ? 'w-16' : 'w-64'} bg-gradient-to-b from-blue-700 to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out z-20 fixed md:relative h-screen`}
+      className={`${collapsed ? 'w-16' : 'w-64'} bg-gradient-to-b from-slate-900 via-blue-900 to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out z-20 fixed md:relative h-screen shadow-xl`}
     >
-      <div className="flex items-center p-4 border-b border-blue-600">
+      <div className="flex items-center p-4 border-b border-blue-700/50">
         {!collapsed && (
-          <h1 className="text-xl font-bold">WorkFlow</h1>
+          <div className="flex items-center">
+            <div className="bg-blue-500 p-2 rounded-lg mr-3">
+              <Workflow className="h-6 w-6 text-white" />
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-200 to-white bg-clip-text text-transparent">
+              WorkFlow Pro
+            </h1>
+          </div>
         )}
         {collapsed && (
-          <span className="text-2xl font-bold mx-auto">W</span>
+          <div className="bg-blue-500 p-2 rounded-lg mx-auto">
+            <Workflow className="h-6 w-6 text-white" />
+          </div>
         )}
         <button 
-          className="ml-auto text-white hover:bg-blue-600 p-1 rounded-full"
+          className="ml-auto text-blue-200 hover:bg-blue-700/50 p-1 rounded-full transition-colors"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -106,9 +115,10 @@ const Sidebar: React.FC = () => {
                 className={`
                   flex items-center px-4 py-3 text-sm font-medium
                   transition-colors duration-200
+                  rounded-lg mx-2 mb-1
                   ${isActive(item.path) 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-100 hover:bg-blue-600/50'}
+                    ? 'bg-blue-600/80 text-white shadow-lg' 
+                    : 'text-blue-100 hover:bg-blue-700/50 hover:text-white'}
                 `}
               >
                 <span className={`${collapsed ? 'mx-auto' : 'mr-3'}`}>
