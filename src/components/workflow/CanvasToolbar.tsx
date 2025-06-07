@@ -17,7 +17,10 @@ import {
   Bell,
   AlertTriangle,
   Workflow,
-  ChevronDown
+  ChevronDown,
+  Grid3X3,
+  Move,
+  MousePointer
 } from 'lucide-react';
 
 interface CanvasToolbarProps {
@@ -29,6 +32,8 @@ interface CanvasToolbarProps {
   hasSelection: boolean;
   scale: number;
   isReadOnly?: boolean;
+  snapToGrid?: boolean;
+  onToggleSnap?: () => void;
 }
 
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -39,9 +44,12 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onDeleteSelected,
   hasSelection,
   scale,
-  isReadOnly = false
+  isReadOnly = false,
+  snapToGrid = true,
+  onToggleSnap
 }) => {
   const [showElementMenu, setShowElementMenu] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<'select' | 'pan'>('select');
 
   const elementTypes = [
     { type: 'start' as const, icon: PlayCircle, label: 'Start', color: 'text-green-600', description: 'Begin workflow execution' },
@@ -66,39 +74,63 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   return (
     <>
       {/* Main Toolbar */}
-      <div className="absolute top-4 left-4 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-4" style={{ minWidth: '300px' }}>
-        <div className="flex items-center gap-4">
+      <div className="absolute top-4 left-4 z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-3">
+        <div className="flex items-center gap-3">
+          {/* Tool Selection */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <Button
+              variant={selectedTool === 'select' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedTool('select')}
+              className="px-2 py-1"
+              title="Select Tool (V)"
+            >
+              <MousePointer className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={selectedTool === 'pan' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedTool('pan')}
+              className="px-2 py-1"
+              title="Pan Tool (H)"
+            >
+              <Move className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="w-px h-6 bg-gray-300" />
+
           {/* Add Element Dropdown */}
           <div className="relative">
             <Button
               variant="primary"
-              size="md"
+              size="sm"
               onClick={() => setShowElementMenu(!showElementMenu)}
-              className="flex items-center gap-2 font-medium px-4 py-2"
+              className="flex items-center gap-2 px-3 py-2"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               Add Element
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
             </Button>
             
             {/* Element Menu */}
             {showElementMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 grid grid-cols-2 gap-3 min-w-[400px] z-60">
-                <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 border-b border-gray-100 pb-2">
+              <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-3 grid grid-cols-2 gap-2 min-w-[380px] z-60">
+                <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 pb-2 border-b border-gray-100">
                   Workflow Elements
                 </div>
                 {elementTypes.map(({ type, icon: Icon, label, color, description }) => (
                   <button
                     key={type}
                     onClick={() => handleAddElement(type)}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 text-left border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all group"
+                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 text-left border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all group"
                   >
-                    <div className={`p-2 rounded-lg bg-gray-50 group-hover:bg-white ${color} transition-colors`}>
-                      <Icon className="h-5 w-5" />
+                    <div className={`p-1.5 rounded-md bg-gray-50 group-hover:bg-white ${color} transition-colors`}>
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold text-gray-900">{label}</div>
-                      <div className="text-xs text-gray-500 mt-1">{description}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900">{label}</div>
+                      <div className="text-xs text-gray-500 mt-0.5 line-clamp-2">{description}</div>
                     </div>
                   </button>
                 ))}
@@ -106,92 +138,55 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             )}
           </div>
 
-          <div className="w-px h-8 bg-gray-300" />
+          <div className="w-px h-6 bg-gray-300" />
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onZoomOut} title="Zoom Out">
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={onZoomOut} title="Zoom Out (Ctrl + -)">
               <ZoomOut className="h-4 w-4" />
             </Button>
             
-            <div className="text-sm font-medium text-gray-700 min-w-[60px] text-center bg-gray-50 px-3 py-1 rounded-md border">
+            <div className="text-xs font-medium text-gray-700 min-w-[50px] text-center bg-gray-50 px-2 py-1 rounded border">
               {Math.round(scale * 100)}%
             </div>
             
-            <Button variant="outline" size="sm" onClick={onZoomIn} title="Zoom In">
+            <Button variant="outline" size="sm" onClick={onZoomIn} title="Zoom In (Ctrl + +)">
               <ZoomIn className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="w-px h-8 bg-gray-300" />
+          <div className="w-px h-6 bg-gray-300" />
 
           {/* View Controls */}
-          <Button variant="outline" size="sm" onClick={onResetView} title="Reset View">
+          <Button variant="outline" size="sm" onClick={onResetView} title="Reset View (Ctrl + 0)">
             <RotateCcw className="h-4 w-4" />
+          </Button>
+
+          {/* Grid Toggle */}
+          <Button 
+            variant={snapToGrid ? "primary" : "outline"} 
+            size="sm" 
+            onClick={onToggleSnap} 
+            title="Toggle Grid Snap (Ctrl + G)"
+          >
+            <Grid3X3 className="h-4 w-4" />
           </Button>
 
           {/* Delete Selected */}
           {hasSelection && (
             <>
-              <div className="w-px h-8 bg-gray-300" />
+              <div className="w-px h-6 bg-gray-300" />
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={onDeleteSelected} 
                 className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50"
-                title="Delete Selected"
+                title="Delete Selected (Del)"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </>
           )}
-        </div>
-      </div>
-
-      {/* Quick Actions Palette */}
-      <div className="absolute top-24 left-4 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-3" style={{ marginTop: '80px' }}>
-        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quick Add</div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleAddElement('start')} 
-            title="Add Start"
-            className="flex flex-col items-center gap-1 h-auto py-2"
-          >
-            <PlayCircle className="h-5 w-5 text-green-600" />
-            <span className="text-xs">Start</span>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleAddElement('task')} 
-            title="Add Task"
-            className="flex flex-col items-center gap-1 h-auto py-2"
-          >
-            <CheckSquare className="h-5 w-5 text-blue-600" />
-            <span className="text-xs">Task</span>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleAddElement('decision')} 
-            title="Add Decision"
-            className="flex flex-col items-center gap-1 h-auto py-2"
-          >
-            <GitBranch className="h-5 w-5 text-amber-600" />
-            <span className="text-xs">Decision</span>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleAddElement('end')} 
-            title="Add End"
-            className="flex flex-col items-center gap-1 h-auto py-2"
-          >
-            <Flag className="h-5 w-5 text-red-600" />
-            <span className="text-xs">End</span>
-          </Button>
         </div>
       </div>
 
