@@ -66,7 +66,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   return (
     <>
       {/* Main Toolbar */}
-      <div className="absolute top-4 left-4 z-40 bg-white rounded-xl shadow-xl border border-gray-200 p-4">
+      <div className="absolute top-4 left-4 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-4" style={{ minWidth: '300px' }}>
         <div className="flex items-center gap-4">
           {/* Add Element Dropdown */}
           <div className="relative">
@@ -83,7 +83,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             
             {/* Element Menu */}
             {showElementMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 grid grid-cols-2 gap-3 min-w-[400px] z-50">
+              <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 grid grid-cols-2 gap-3 min-w-[400px] z-60">
                 <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 border-b border-gray-100 pb-2">
                   Workflow Elements
                 </div>
@@ -149,7 +149,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       </div>
 
       {/* Quick Actions Palette */}
-      <div className="absolute top-20 left-4 z-40 bg-white rounded-xl shadow-lg border border-gray-200 p-3">
+      <div className="absolute top-24 left-4 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-3" style={{ marginTop: '80px' }}>
         <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quick Add</div>
         <div className="grid grid-cols-2 gap-2">
           <Button 
@@ -198,7 +198,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       {/* Overlay to close menu when clicking outside */}
       {showElementMenu && (
         <div 
-          className="fixed inset-0 z-30" 
+          className="fixed inset-0 z-40" 
           onClick={() => setShowElementMenu(false)}
         />
       )}

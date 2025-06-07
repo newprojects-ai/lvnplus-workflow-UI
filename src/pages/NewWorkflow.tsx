@@ -113,7 +113,7 @@ const NewWorkflow: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
         {/* Main Canvas Area */}
         <div className="xl:col-span-3">
-          <Card className="h-full p-0 overflow-hidden">
+          <Card className="h-full p-0 overflow-hidden relative">
             <div className="p-4 border-b border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <div>
@@ -140,12 +140,13 @@ const NewWorkflow: React.FC = () => {
               </div>
             </div>
             
-            <div className="h-[calc(100%-80px)]">
+            <div className="h-[calc(100%-80px)] relative">
               <WorkflowCanvas
                 workflow={workflow}
                 onWorkflowChange={handleWorkflowChange}
                 selectedStepId={selectedStep}
                 onStepSelect={setSelectedStep}
+                isReadOnly={false}
               />
             </div>
           </Card>
