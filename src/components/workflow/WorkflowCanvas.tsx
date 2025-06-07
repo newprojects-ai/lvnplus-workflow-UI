@@ -21,6 +21,15 @@ interface DragState {
   initialElementPosition?: { x: number; y: number };
 }
 
+interface ConnectionState {
+  active: boolean;
+  fromStepId: string | null;
+  previewLine?: {
+    from: { x: number; y: number };
+    to: { x: number; y: number };
+  };
+}
+
 const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   workflow,
   onWorkflowChange,
@@ -33,7 +42,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
-  const [connectionMode, setConnectionMode] = useState<{ active: boolean; fromStepId: string | null }>({ 
+  const [connectionState, setConnectionState] = useState<ConnectionState>({ 
     active: false, 
     fromStepId: null 
   });
@@ -44,6 +53,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   });
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
   const [snapToGrid, setSnapToGrid] = useState(true);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const gridSize = 20;
 
   // Update canvas size on mount and resize
@@ -59,6 +69,38 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     window.addEventListener('resize', updateCanvasSize);
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
+
+  // Track mouse position for connection preview
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (connectionState.active && connectionState.fromStepId) {
+        const canvasPos = screenToCanvas(e.clientX, e.clientY);
+        setMousePosition(canvasPos);
+        
+        // Update preview line
+        const fromStep = workflow.steps.find(s => s.id === connectionState.fromStepId);
+        if (fromStep) {
+          const fromCenter = {
+            x: fromStep.position.x + (fromStep.type === 'decision' ? 32 : 48),
+            y: fromStep.position.y + (fromStep.type === 'decision' ? 32 : 32)
+          };
+          
+          setConnectionState(prev => ({
+            ...prev,
+            previewLine: {
+              from: fromCenter,
+              to: canvasPos
+            }
+          }));
+        }
+      }
+    };
+
+    if (connectionState.active) {
+      document.addEventListener('mousemove', handleMouseMove);
+      return () => document.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [connectionState.active, connectionState.fromStepId, workflow.steps]);
 
   // Snap to grid helper
   const snapPosition = useCallback((position: { x: number; y: number }) => {
@@ -82,6 +124,12 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   // Handle mouse down events
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0 || isReadOnly) return;
+    
+    // If in connection mode, cancel it when clicking on empty space
+    if (connectionState.active) {
+      setConnectionState({ active: false, fromStepId: null });
+      return;
+    }
     
     const canvasPos = screenToCanvas(e.clientX, e.clientY);
     
@@ -125,7 +173,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       setSelectedElements([]);
       onStepSelect?.(null);
     }
-  }, [workflow.steps, offset, scale, isReadOnly, onStepSelect, screenToCanvas]);
+  }, [workflow.steps, offset, scale, isReadOnly, onStepSelect, screenToCanvas, connectionState.active]);
 
   // Handle mouse move events
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -185,7 +233,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         break;
       case 'Escape':
         setSelectedElements([]);
-        setConnectionMode({ active: false, fromStepId: null });
+        setConnectionState({ active: false, fromStepId: null });
         onStepSelect?.(null);
         break;
       case 'a':
@@ -289,7 +337,10 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     const existingConnection = workflow.transitions.find(
       t => t.from === fromId && t.to === toId
     );
-    if (existingConnection) return;
+    if (existingConnection) {
+      console.log('Connection already exists');
+      return;
+    }
 
     const newTransition: WorkflowTransition = {
       id: `transition-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -302,21 +353,24 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       transitions: [...workflow.transitions, newTransition]
     };
 
+    console.log('Creating connection:', newTransition);
     onWorkflowChange(updatedWorkflow);
-    setConnectionMode({ active: false, fromStepId: null });
+    setConnectionState({ active: false, fromStepId: null });
   }, [workflow, onWorkflowChange, isReadOnly]);
 
   // Handle connection mode
   const handleStartConnection = useCallback((stepId: string) => {
     if (isReadOnly) return;
-    setConnectionMode({ active: true, fromStepId: stepId });
+    console.log('Starting connection from:', stepId);
+    setConnectionState({ active: true, fromStepId: stepId });
   }, [isReadOnly]);
 
   const handleEndConnection = useCallback((stepId: string) => {
-    if (connectionMode.active && connectionMode.fromStepId) {
-      handleCreateConnection(connectionMode.fromStepId, stepId);
+    if (connectionState.active && connectionState.fromStepId) {
+      console.log('Ending connection at:', stepId);
+      handleCreateConnection(connectionState.fromStepId, stepId);
     }
-  }, [connectionMode, handleCreateConnection]);
+  }, [connectionState, handleCreateConnection]);
 
   return (
     <div className="relative w-full h-full bg-gray-50 overflow-hidden select-none" style={{ minHeight: '500px' }}>
@@ -355,8 +409,8 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-center">
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-12 h-12 text-gray-400\" fill="none\" stroke="currentColor\" viewBox="0 0 24 24">
-                <path strokeLinecap="round\" strokeLinejoin="round\" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Start Building Your Workflow</h3>
@@ -379,7 +433,8 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       <div
         ref={canvasRef}
         className={`w-full h-full focus:outline-none ${
-          dragState.dragType === 'canvas' ? 'cursor-grabbing' : 'cursor-grab'
+          dragState.dragType === 'canvas' ? 'cursor-grabbing' : 
+          connectionState.active ? 'cursor-crosshair' : 'cursor-grab'
         }`}
         tabIndex={0}
         onMouseDown={handleMouseDown}
@@ -408,6 +463,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
             className="absolute inset-0 pointer-events-none"
             style={{ width: '100%', height: '100%', overflow: 'visible' }}
           >
+            {/* Existing connections */}
             {workflow.transitions.map(transition => (
               <CanvasConnection
                 key={transition.id}
@@ -418,6 +474,20 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                 onSelect={() => setSelectedElements([transition.id])}
               />
             ))}
+            
+            {/* Connection preview line */}
+            {connectionState.active && connectionState.previewLine && (
+              <line
+                x1={connectionState.previewLine.from.x}
+                y1={connectionState.previewLine.from.y}
+                x2={connectionState.previewLine.to.x}
+                y2={connectionState.previewLine.to.y}
+                stroke="#3b82f6"
+                strokeWidth="2"
+                strokeDasharray="5,5"
+                className="pointer-events-none"
+              />
+            )}
           </svg>
 
           {/* Render Elements */}
@@ -434,7 +504,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               onHover={(stepId) => setHoveredElement(stepId)}
               onStartConnection={handleStartConnection}
               onEndConnection={handleEndConnection}
-              connectionMode={connectionMode}
+              connectionMode={connectionState}
               isReadOnly={isReadOnly}
               isDragging={dragState.isDragging && dragState.elementId === step.id}
             />
@@ -443,12 +513,12 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       </div>
 
       {/* Connection Mode Overlay */}
-      {connectionMode.active && (
+      {connectionState.active && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
           Click on another element to create a connection
           <button
-            onClick={() => setConnectionMode({ active: false, fromStepId: null })}
+            onClick={() => setConnectionState({ active: false, fromStepId: null })}
             className="ml-2 text-blue-200 hover:text-white transition-colors"
           >
             ✕
@@ -465,6 +535,9 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         {selectedElements.length > 0 && (
           <span className="text-blue-600">{selectedElements.length} selected</span>
         )}
+        {connectionState.active && (
+          <span className="text-blue-600 animate-pulse">Connection Mode</span>
+        )}
       </div>
 
       {/* Keyboard Shortcuts Help */}
@@ -475,6 +548,7 @@ const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           <div><kbd className="bg-gray-100 px-1 rounded">Ctrl+A</kbd> Select all</div>
           <div><kbd className="bg-gray-100 px-1 rounded">Ctrl+G</kbd> Toggle grid</div>
           <div><kbd className="bg-gray-100 px-1 rounded">Ctrl+Wheel</kbd> Zoom</div>
+          <div><kbd className="bg-gray-100 px-1 rounded">Esc</kbd> Cancel connection</div>
         </div>
       </div>
     </div>

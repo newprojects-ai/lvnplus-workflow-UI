@@ -100,17 +100,25 @@ const CanvasElement: React.FC<CanvasElementProps> = ({
 
   const handleConnectionClick = useCallback((e: React.MouseEvent, isOutput: boolean) => {
     e.stopPropagation();
+    e.preventDefault();
+    
+    console.log('Connection click:', { stepId: step.id, isOutput, connectionMode });
     
     if (connectionMode.active) {
       if (connectionMode.fromStepId === step.id) {
-        // Cancel connection
+        // Cancel connection if clicking on the same element
+        console.log('Canceling connection - same element');
         return;
       }
+      // Complete the connection
+      console.log('Completing connection to:', step.id);
       onEndConnection(step.id);
-    } else if (isOutput) {
+    } else if (isOutput && step.type !== 'end') {
+      // Start a new connection from this element
+      console.log('Starting connection from:', step.id);
       onStartConnection(step.id);
     }
-  }, [connectionMode, step.id, onStartConnection, onEndConnection]);
+  }, [connectionMode, step.id, step.type, onStartConnection, onEndConnection]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -144,6 +152,9 @@ const CanvasElement: React.FC<CanvasElementProps> = ({
       y: elementHeight / 2
     }
   };
+
+  // Determine if we should show connection points
+  const shouldShowConnectionPoints = (showConnectionPoints || connectionMode.active || isSelected) && !isReadOnly;
 
   return (
     <>
@@ -197,19 +208,19 @@ const CanvasElement: React.FC<CanvasElementProps> = ({
         </div>
         
         {/* Connection Points */}
-        {(showConnectionPoints || connectionMode.active || isSelected) && !isReadOnly && (
+        {shouldShowConnectionPoints && (
           <>
             {/* Input connection point */}
             {step.type !== 'start' && (
               <div
-                className={`absolute w-3 h-3 rounded-full border-2 border-white transition-all duration-200 ${
+                className={`absolute w-4 h-4 rounded-full border-2 border-white transition-all duration-200 cursor-pointer ${
                   connectionMode.active && connectionMode.fromStepId !== step.id
-                    ? 'bg-green-500 opacity-100 scale-125 cursor-pointer hover:scale-150'
-                    : 'bg-blue-500 opacity-0 group-hover:opacity-100'
+                    ? 'bg-green-500 opacity-100 scale-125 hover:scale-150 shadow-lg'
+                    : 'bg-blue-500 opacity-0 group-hover:opacity-100 hover:scale-125'
                 }`}
                 style={{
-                  left: connectionPoints.input.x - 6,
-                  top: connectionPoints.input.y - 6,
+                  left: connectionPoints.input.x - 8,
+                  top: connectionPoints.input.y - 8,
                   transform: isDecision ? 'rotate(-45deg)' : 'none'
                 }}
                 onClick={(e) => handleConnectionClick(e, false)}
@@ -220,18 +231,18 @@ const CanvasElement: React.FC<CanvasElementProps> = ({
             {/* Output connection point */}
             {step.type !== 'end' && (
               <div
-                className={`absolute w-3 h-3 rounded-full border-2 border-white transition-all duration-200 ${
+                className={`absolute w-4 h-4 rounded-full border-2 border-white transition-all duration-200 cursor-pointer ${
                   connectionMode.active && connectionMode.fromStepId === step.id
-                    ? 'bg-red-500 opacity-100 scale-125'
-                    : 'bg-green-500 opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-125'
+                    ? 'bg-red-500 opacity-100 scale-125 shadow-lg'
+                    : 'bg-green-500 opacity-0 group-hover:opacity-100 hover:scale-125'
                 }`}
                 style={{
-                  left: connectionPoints.output.x - 6,
-                  top: connectionPoints.output.y - 6,
+                  left: connectionPoints.output.x - 8,
+                  top: connectionPoints.output.y - 8,
                   transform: isDecision ? 'rotate(-45deg)' : 'none'
                 }}
                 onClick={(e) => handleConnectionClick(e, true)}
-                title="Output connection"
+                title="Output connection - Click to start connection"
               />
             )}
 
@@ -239,20 +250,20 @@ const CanvasElement: React.FC<CanvasElementProps> = ({
             {isDecision && (
               <>
                 <div
-                  className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-125 transition-all duration-200"
+                  className="absolute w-4 h-4 bg-green-500 rounded-full border-2 border-white opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-125 transition-all duration-200"
                   style={{
-                    left: connectionPoints.left.x - 6,
-                    top: connectionPoints.left.y - 6,
+                    left: connectionPoints.left.x - 8,
+                    top: connectionPoints.left.y - 8,
                     transform: 'rotate(-45deg)'
                   }}
                   onClick={(e) => handleConnectionClick(e, true)}
                   title="Left output"
                 />
                 <div
-                  className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-125 transition-all duration-200"
+                  className="absolute w-4 h-4 bg-green-500 rounded-full border-2 border-white opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-125 transition-all duration-200"
                   style={{
-                    left: connectionPoints.right.x - 6,
-                    top: connectionPoints.right.y - 6,
+                    left: connectionPoints.right.x - 8,
+                    top: connectionPoints.right.y - 8,
                     transform: 'rotate(-45deg)'
                   }}
                   onClick={(e) => handleConnectionClick(e, true)}
@@ -316,7 +327,14 @@ const CanvasElement: React.FC<CanvasElementProps> = ({
               <Copy className="h-4 w-4 mr-2 text-gray-500" />
               Duplicate
             </button>
-            <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center transition-colors">
+            <button 
+              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowContextMenu(false);
+                onStartConnection(step.id);
+              }}
+            >
               <Link className="h-4 w-4 mr-2 text-gray-500" />
               Add Connection
             </button>
