@@ -11,8 +11,7 @@ class WorkflowService {
           steps:workflow_steps(*),
           transitions:workflow_transitions(*),
           variables:workflow_variables(*),
-          error_handlers:workflow_error_handlers(*),
-          created_by:users(*)
+          error_handlers:workflow_error_handlers(*)
         `)
         .order('createdAt', { ascending: false });
 
@@ -41,8 +40,7 @@ class WorkflowService {
           steps:workflow_steps(*),
           transitions:workflow_transitions(*),
           variables:workflow_variables(*),
-          error_handlers:workflow_error_handlers(*),
-          created_by:users(*)
+          error_handlers:workflow_error_handlers(*)
         `)
         .eq('id', id)
         .single();
