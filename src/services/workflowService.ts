@@ -7,11 +7,48 @@ class WorkflowService {
       const { data, error } = await supabase
         .from('workflows')
         .select(`
-          *,
-          steps:workflow_steps(*),
-          transitions:workflow_transitions(*),
-          variables:workflow_variables(*),
-          error_handlers:workflow_error_handlers(*)
+          id,
+          name,
+          description,
+          version,
+          status,
+          created_by,
+          createdAt,
+          updatedAt,
+          steps:workflow_steps(
+            id,
+            name,
+            type,
+            position,
+            config,
+            created_at,
+            updated_at
+          ),
+          transitions:workflow_transitions(
+            id,
+            from_step_id,
+            to_step_id,
+            condition,
+            created_at,
+            updated_at
+          ),
+          variables:workflow_variables(
+            id,
+            name,
+            type,
+            source,
+            target,
+            transform,
+            created_at,
+            updated_at
+          ),
+          error_handlers:workflow_error_handlers(
+            id,
+            type,
+            config,
+            created_at,
+            updated_at
+          )
         `)
         .order('createdAt', { ascending: false });
 
@@ -36,11 +73,48 @@ class WorkflowService {
       const { data, error } = await supabase
         .from('workflows')
         .select(`
-          *,
-          steps:workflow_steps(*),
-          transitions:workflow_transitions(*),
-          variables:workflow_variables(*),
-          error_handlers:workflow_error_handlers(*)
+          id,
+          name,
+          description,
+          version,
+          status,
+          created_by,
+          createdAt,
+          updatedAt,
+          steps:workflow_steps(
+            id,
+            name,
+            type,
+            position,
+            config,
+            created_at,
+            updated_at
+          ),
+          transitions:workflow_transitions(
+            id,
+            from_step_id,
+            to_step_id,
+            condition,
+            created_at,
+            updated_at
+          ),
+          variables:workflow_variables(
+            id,
+            name,
+            type,
+            source,
+            target,
+            transform,
+            created_at,
+            updated_at
+          ),
+          error_handlers:workflow_error_handlers(
+            id,
+            type,
+            config,
+            created_at,
+            updated_at
+          )
         `)
         .eq('id', id)
         .single();
